@@ -203,30 +203,37 @@ class qtype_dictation_question extends question_graded_automatically {
     }
 
     /**
-     * Get the transcript with input boxes for gaps.
+     * Check if two responses are the same.
      *
-     * @return string HTML for the question text with input boxes
+     * @param array $prevresponse
+     * @param array $newresponse
+     * @return bool
      */
-    public function get_question_text_with_gaps() {
-        $text = $this->transcript;
-        $gapindex = 0;
+    public function is_same_response(array $prevresponse, array $newresponse) {
+        for ($i = 0; $i < count($this->gaps); $i++) {
+            $gapkey = 'gap_' . $i;
+            $prev = isset($prevresponse[$gapkey]) ? $prevresponse[$gapkey] : '';
+            $new = isset($newresponse[$gapkey]) ? $newresponse[$gapkey] : '';
+            
+            if ($prev !== $new) {
+                return false;
+            }
+        }
         
-        // Replace [word] with input boxes
-        $text = preg_replace_callback('/\[([^\]]+)\]/', function($matches) use (&$gapindex) {
-            $inputhtml = html_writer::empty_tag('input', array(
-                'type' => 'text',
-                'name' => $this->get_qt_field_name('gap_' . $gapindex),
-                'id' => $this->get_qt_field_name('gap_' . $gapindex),
-                'class' => 'dictation-gap',
-                'size' => max(8, strlen($matches[1])),
-                'autocomplete' => 'off'
-            ));
-            $gapindex++;
-            return $inputhtml;
-        }, $text);
+        // Also check play count if audio is enabled
+        if ($this->enableaudio) {
+            $prevcount = isset($prevresponse['playcount']) ? $prevresponse['playcount'] : 0;
+            $newcount = isset($newresponse['playcount']) ? $newresponse['playcount'] : 0;
+            
+            if ($prevcount !== $newcount) {
+                return false;
+            }
+        }
         
-        return $text;
+        return true;
     }
+
+
 
     /**
      * Get detailed feedback for each gap.

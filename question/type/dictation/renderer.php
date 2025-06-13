@@ -42,20 +42,8 @@ class qtype_dictation_renderer extends qtype_renderer {
         $question = $qa->get_question();
         $currentanswer = $qa->get_last_qt_data();
         
-        $inputname = $qa->get_qt_field_name('answer');
-        $inputattributes = array(
-            'type' => 'hidden',
-            'name' => $inputname,
-            'value' => $qa->get_last_qt_var('answer'),
-            'id' => $inputname,
-        );
-
+        // Display the question text
         $questiontext = $question->format_questiontext($qa);
-        $placeholder = false;
-        if (preg_match('/_____+/', $questiontext, $matches)) {
-            $placeholder = $matches[0];
-        }
-
         $result = html_writer::tag('div', $questiontext, array('class' => 'qtext'));
 
         // Add audio player if enabled
@@ -64,8 +52,7 @@ class qtype_dictation_renderer extends qtype_renderer {
         }
 
         // Add the question text with input gaps
-        $result .= html_writer::tag('div', $question->get_question_text_with_gaps(), 
-            array('class' => 'dictation-question-text'));
+        $result .= $this->render_question_text_with_gaps($question, $qa, $currentanswer);
 
         // Add JavaScript for audio control and form handling
         $PAGE->requires->js_call_amd('qtype_dictation/dictation', 'init', array(
@@ -155,6 +142,39 @@ class qtype_dictation_renderer extends qtype_renderer {
         $html .= html_writer::end_tag('div');
         
         return $html;
+    }
+
+    /**
+     * Render the question text with input gaps.
+     *
+     * @param qtype_dictation_question $question
+     * @param question_attempt $qa
+     * @param array $currentanswer
+     * @return string HTML for question text with gaps
+     */
+    private function render_question_text_with_gaps($question, $qa, $currentanswer) {
+        $text = $question->transcript;
+        $gapindex = 0;
+        
+        // Replace [word] with input boxes
+        $text = preg_replace_callback('/\[([^\]]+)\]/', function($matches) use (&$gapindex, $qa, $currentanswer) {
+            $fieldname = $qa->get_qt_field_name('gap_' . $gapindex);
+            $currentvalue = isset($currentanswer['gap_' . $gapindex]) ? $currentanswer['gap_' . $gapindex] : '';
+            
+            $inputhtml = html_writer::empty_tag('input', array(
+                'type' => 'text',
+                'name' => $fieldname,
+                'id' => $fieldname,
+                'value' => $currentvalue,
+                'class' => 'dictation-gap',
+                'size' => max(8, strlen($matches[1])),
+                'autocomplete' => 'off'
+            ));
+            $gapindex++;
+            return $inputhtml;
+        }, $text);
+        
+        return html_writer::tag('div', $text, array('class' => 'dictation-question-text'));
     }
 
     /**
