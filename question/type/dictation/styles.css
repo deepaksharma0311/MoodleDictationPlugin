@@ -1,0 +1,202 @@
+/* Dictation question type styles */
+
+.dictation-question-text {
+    font-size: 1.1em;
+    line-height: 1.6;
+    margin: 15px 0;
+    padding: 15px;
+    background: #f9f9f9;
+    border-radius: 5px;
+    border: 1px solid #ddd;
+}
+
+.dictation-gap {
+    border: 2px solid #007cba;
+    border-radius: 3px;
+    padding: 5px 8px;
+    margin: 0 2px;
+    font-size: 1em;
+    background: #fff;
+    min-width: 60px;
+    text-align: center;
+}
+
+.dictation-gap:focus {
+    border-color: #0056b3;
+    box-shadow: 0 0 5px rgba(0, 123, 186, 0.3);
+    outline: none;
+}
+
+.dictation-audio-player {
+    margin: 15px 0;
+    padding: 15px;
+    background: #f5f5f5;
+    border-radius: 5px;
+    border: 1px solid #ddd;
+    text-align: center;
+}
+
+.dictation-audio {
+    width: 100%;
+    max-width: 400px;
+    margin-bottom: 10px;
+}
+
+.dictation-play-btn {
+    margin: 0 10px;
+    padding: 8px 16px;
+    font-size: 1em;
+}
+
+.dictation-play-btn.disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.dictation-play-counter {
+    display: inline-block;
+    margin-left: 15px;
+    font-size: 0.9em;
+    color: #666;
+}
+
+.dictation-feedback {
+    margin-top: 20px;
+    padding: 15px;
+    background: #f9f9f9;
+    border-radius: 5px;
+    border: 1px solid #ddd;
+}
+
+.dictation-feedback h4 {
+    margin-top: 0;
+    color: #333;
+}
+
+.dictation-feedback-details {
+    margin-top: 15px;
+}
+
+.gap-feedback {
+    margin-bottom: 15px;
+    padding: 10px;
+    border-radius: 5px;
+    border-left: 4px solid #ccc;
+}
+
+.gap-feedback.correct {
+    background: #d4edda;
+    border-left-color: #28a745;
+}
+
+.gap-feedback.incorrect {
+    background: #f8d7da;
+    border-left-color: #dc3545;
+}
+
+.gap-feedback strong {
+    display: block;
+    margin-bottom: 5px;
+    color: #333;
+}
+
+.correct-answer {
+    color: #28a745;
+    font-weight: bold;
+}
+
+.student-answer {
+    color: #6c757d;
+}
+
+.gap-score {
+    font-size: 0.9em;
+    color: #495057;
+    margin-top: 5px;
+}
+
+/* Form editing styles */
+.dictation-transcript {
+    font-family: monospace;
+    font-size: 1em;
+    line-height: 1.4;
+}
+
+.dictation-preview {
+    margin: 15px 0;
+    padding: 15px;
+    background: #f9f9f9;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+}
+
+.dictation-preview h5 {
+    margin-top: 0;
+    color: #333;
+}
+
+.dictation-preview-text {
+    font-size: 1.1em;
+    line-height: 1.6;
+}
+
+.dictation-preview-gap {
+    display: inline-block;
+    min-width: 60px;
+    height: 20px;
+    border-bottom: 2px solid #007cba;
+    margin: 0 2px;
+    vertical-align: bottom;
+}
+
+/* Export button */
+.dictation-export-btn {
+    margin: 10px 0;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .dictation-audio-player {
+        text-align: center;
+    }
+    
+    .dictation-play-counter {
+        display: block;
+        margin: 10px 0 0 0;
+    }
+    
+    .dictation-gap {
+        min-width: 50px;
+        font-size: 0.9em;
+    }
+    
+    .gap-feedback {
+        padding: 8px;
+    }
+}
+
+/* Accessibility improvements */
+.dictation-gap:focus {
+    outline: 2px solid #007cba;
+    outline-offset: 2px;
+}
+
+.dictation-play-btn:focus {
+    outline: 2px solid #007cba;
+    outline-offset: 2px;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    .dictation-gap {
+        border-width: 3px;
+    }
+    
+    .gap-feedback.correct {
+        border-left-width: 6px;
+    }
+    
+    .gap-feedback.incorrect {
+        border-left-width: 6px;
+    }
+}
