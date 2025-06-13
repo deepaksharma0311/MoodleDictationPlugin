@@ -11,6 +11,7 @@
         <FIELD NAME="transcript" TYPE="text" NOTNULL="true" SEQUENCE="false" COMMENT="The transcript text with gaps marked by square brackets"/>
         <FIELD NAME="maxplays" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Maximum number of times audio can be played (0 = unlimited)"/>
         <FIELD NAME="enableaudio" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="1" SEQUENCE="false" COMMENT="Whether audio is enabled (1) or disabled (0) for C-test mode"/>
+        <FIELD NAME="audiofile" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Audio file information for dictation mode"/>
         <FIELD NAME="gaps" TYPE="text" NOTNULL="true" SEQUENCE="false" COMMENT="JSON encoded array of gap words extracted from transcript"/>
       </FIELDS>
       <KEYS>

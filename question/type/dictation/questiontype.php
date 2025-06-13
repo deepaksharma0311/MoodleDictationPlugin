@@ -43,7 +43,6 @@ class qtype_dictation extends question_type {
             'transcript',
             'maxplays',
             'enableaudio',
-            'audiofile',
             'gaps'
         );
     }
@@ -168,6 +167,8 @@ class qtype_dictation extends question_type {
         // Load audio file information
         if ($question->enableaudio) {
             $question->audiofile = $this->get_audio_file_url($questiondata->id, $questiondata->contextid);
+        } else {
+            $question->audiofile = null;
         }
     }
 

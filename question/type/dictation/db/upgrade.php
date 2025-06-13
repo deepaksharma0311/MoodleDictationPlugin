@@ -41,5 +41,17 @@ function xmldb_qtype_dictation_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2024120900, 'qtype', 'dictation');
     }
 
+    if ($oldversion < 2024121300) {
+        // Add audiofile field to existing installations
+        $table = new xmldb_table('qtype_dictation_options');
+        $field = new xmldb_field('audiofile', XMLDB_TYPE_TEXT, null, null, null, null, null, 'enableaudio');
+
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        upgrade_plugin_savepoint(true, 2024121300, 'qtype', 'dictation');
+    }
+
     return true;
 }
