@@ -1,4 +1,4 @@
-modules = ["php"]
+modules = ["php", "php-8.2"]
 
 [nix]
 channel = "stable-24_05"
@@ -13,16 +13,20 @@ author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "Moodle Server"
+args = "Demo Server"
 
 [[workflows.workflow]]
-name = "Moodle Server"
+name = "Demo Server"
 author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "cd /tmp && git clone https://github.com/moodle/moodle.git --branch MOODLE_311_STABLE --depth 1 && cd moodle && cp -r /home/runner/work/question /tmp/moodle/question/type/dictation && php -S 0.0.0.0:5000 -t /tmp/moodle"
+args = "php -S 0.0.0.0:5000 demo_server.php"
 waitForPort = 5000
 
 [deployment]
 run = ["sh", "-c", "cd /tmp && git clone https://github.com/moodle/moodle.git --branch MOODLE_311_STABLE --depth 1 && cd moodle && cp -r /home/runner/work/question /tmp/moodle/question/type/dictation && php -S 0.0.0.0:5000 -t /tmp/moodle"]
+
+[[ports]]
+localPort = 5000
+externalPort = 80
