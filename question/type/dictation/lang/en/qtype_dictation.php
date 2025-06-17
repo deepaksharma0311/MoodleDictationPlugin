@@ -39,6 +39,12 @@ $string['transcript_help'] = 'Enter the transcript text. Mark words to be filled
 $string['transcriptrequired'] = 'Transcript is required.';
 $string['maxplays'] = 'Maximum plays';
 $string['maxplays_help'] = 'Set the maximum number of times students can play the audio. Choose unlimited for no restrictions.';
+$string['displaymode'] = 'Gap display mode';
+$string['displaymode_help'] = 'Choose how gaps are displayed to students: Standard (blank line), Length (one underscore per letter), Letters (show first letter), or Partial (show first half of word).';
+$string['displaystandard'] = 'Standard blank (_______)';
+$string['displaylength'] = 'Length hints (_ _ _ _)';
+$string['displayletters'] = 'Letter hints (g o _ _)';
+$string['displaypartial'] = 'Partial word (C-test style)';
 
 // Play options
 $string['unlimited'] = 'Unlimited';

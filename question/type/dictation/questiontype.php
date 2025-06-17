@@ -43,6 +43,7 @@ class qtype_dictation extends question_type {
             'transcript',
             'maxplays',
             'enableaudio',
+            'displaymode',
             'gaps'
         );
     }
@@ -99,6 +100,7 @@ class qtype_dictation extends question_type {
         $options->transcript = $question->transcript;
         $options->maxplays = $question->maxplays;
         $options->enableaudio = isset($question->enableaudio) ? 1 : 0;
+        $options->displaymode = isset($question->displaymode) ? $question->displaymode : 'standard';
         $options->gaps = $this->extract_gaps($question->transcript);
 
         if (!empty($options->id)) {
@@ -162,6 +164,7 @@ class qtype_dictation extends question_type {
         $question->transcript = $questiondata->options->transcript;
         $question->maxplays = $questiondata->options->maxplays;
         $question->enableaudio = $questiondata->options->enableaudio;
+        $question->displaymode = isset($questiondata->options->displaymode) ? $questiondata->options->displaymode : 'standard';
         $question->gaps = json_decode($questiondata->options->gaps, true);
         
         // Load audio file information

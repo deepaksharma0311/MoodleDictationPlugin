@@ -44,6 +44,9 @@ class qtype_dictation_question extends question_graded_automatically {
     /** @var array Array of gap words */
     public $gaps;
 
+    /** @var string Display mode for gaps */
+    public $displaymode;
+
     /**
      * Get expected data types for student responses.
      *

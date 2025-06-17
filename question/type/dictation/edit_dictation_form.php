@@ -65,6 +65,17 @@ class qtype_dictation_edit_form extends question_edit_form {
         $mform->setDefault('maxplays', 2);
         $mform->disabledIf('maxplays', 'enableaudio', 'notchecked');
 
+        // Display mode for gaps
+        $displayoptions = array(
+            'standard' => get_string('displaystandard', 'qtype_dictation'),
+            'length' => get_string('displaylength', 'qtype_dictation'),
+            'letters' => get_string('displayletters', 'qtype_dictation'),
+            'partial' => get_string('displaypartial', 'qtype_dictation')
+        );
+        $mform->addElement('select', 'displaymode', get_string('displaymode', 'qtype_dictation'), $displayoptions);
+        $mform->addHelpButton('displaymode', 'displaymode', 'qtype_dictation');
+        $mform->setDefault('displaymode', 'standard');
+
         // Transcript text area
         $mform->addElement('textarea', 'transcript', get_string('transcript', 'qtype_dictation'),
             array('rows' => 8, 'cols' => 80, 'class' => 'dictation-transcript'));
@@ -106,6 +117,7 @@ class qtype_dictation_edit_form extends question_edit_form {
             $question->transcript = $question->options->transcript;
             $question->maxplays = $question->options->maxplays;
             $question->enableaudio = $question->options->enableaudio;
+            $question->displaymode = isset($question->options->displaymode) ? $question->options->displaymode : 'standard';
         }
 
         // Prepare audio file

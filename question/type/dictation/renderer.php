@@ -155,26 +155,78 @@ class qtype_dictation_renderer extends qtype_renderer {
     private function render_question_text_with_gaps($question, $qa, $currentanswer) {
         $text = $question->transcript;
         $gapindex = 0;
+        $displaymode = isset($question->displaymode) ? $question->displaymode : 'standard';
         
-        // Replace [word] with input boxes
-        $text = preg_replace_callback('/\[([^\]]+)\]/', function($matches) use (&$gapindex, $qa, $currentanswer) {
+        // Replace [word] with input boxes based on display mode
+        $text = preg_replace_callback('/\[([^\]]+)\]/', function($matches) use (&$gapindex, $qa, $currentanswer, $displaymode) {
             $fieldname = $qa->get_qt_field_name('gap_' . $gapindex);
             $currentvalue = isset($currentanswer['gap_' . $gapindex]) ? $currentanswer['gap_' . $gapindex] : '';
+            $correctword = $matches[1];
+            
+            // Generate placeholder based on display mode
+            $placeholder = $this->generate_gap_placeholder($correctword, $displaymode);
             
             $inputhtml = html_writer::empty_tag('input', array(
                 'type' => 'text',
                 'name' => $fieldname,
                 'id' => $fieldname,
                 'value' => $currentvalue,
-                'class' => 'dictation-gap',
-                'size' => max(8, strlen($matches[1])),
-                'autocomplete' => 'off'
+                'class' => 'dictation-gap dictation-gap-' . $displaymode,
+                'size' => max(8, strlen($correctword)),
+                'placeholder' => $placeholder,
+                'autocomplete' => 'off',
+                'data-correct-length' => strlen($correctword)
             ));
             $gapindex++;
             return $inputhtml;
         }, $text);
         
         return html_writer::tag('div', $text, array('class' => 'dictation-question-text'));
+    }
+
+    /**
+     * Generate placeholder text for gaps based on display mode.
+     *
+     * @param string $correctword The correct word
+     * @param string $displaymode Display mode setting
+     * @return string Placeholder text
+     */
+    private function generate_gap_placeholder($correctword, $displaymode) {
+        switch ($displaymode) {
+            case 'length':
+                // One underscore per letter: _ _ _ _
+                return str_repeat('_ ', strlen($correctword));
+                
+            case 'letters':
+                // Show individual letter positions: g o _ _
+                $length = strlen($correctword);
+                if ($length <= 2) {
+                    return str_repeat('_ ', $length);
+                }
+                // Show first letter, rest as underscores
+                $result = substr($correctword, 0, 1) . ' ';
+                for ($i = 1; $i < $length; $i++) {
+                    $result .= '_ ';
+                }
+                return trim($result);
+                
+            case 'partial':
+                // Show first half of letters for C-test style
+                $length = strlen($correctword);
+                $showlength = intval($length / 2);
+                if ($showlength == 0) $showlength = 1;
+                
+                $result = substr($correctword, 0, $showlength);
+                for ($i = $showlength; $i < $length; $i++) {
+                    $result .= '_';
+                }
+                return $result;
+                
+            case 'standard':
+            default:
+                // Standard blank line
+                return str_repeat('_', max(8, strlen($correctword)));
+        }
     }
 
     /**
