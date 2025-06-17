@@ -53,5 +53,17 @@ function xmldb_qtype_dictation_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2024121300, 'qtype', 'dictation');
     }
 
+    if ($oldversion < 2024121700) {
+        // Add displaymode field for enhanced C-test functionality
+        $table = new xmldb_table('qtype_dictation_options');
+        $field = new xmldb_field('displaymode', XMLDB_TYPE_CHAR, '20', null, XMLDB_NOTNULL, null, 'standard', 'audiofile');
+
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        upgrade_plugin_savepoint(true, 2024121700, 'qtype', 'dictation');
+    }
+
     return true;
 }

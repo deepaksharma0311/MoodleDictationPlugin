@@ -192,8 +192,18 @@ if (preg_match('/\.(css|js|mp3|wav|ogg)$/', $path)) {
         </div>
 
         <div class="form-group">
+            <label for="displaymode">Gap Display Mode:</label>
+            <select id="displaymode">
+                <option value="standard">Standard blank (_______)</option>
+                <option value="length">Length hints (_ _ _ _)</option>
+                <option value="letters">Letter hints (g o _ _)</option>
+                <option value="partial" selected>Partial word (C-test style)</option>
+            </select>
+        </div>
+
+        <div class="form-group">
             <label for="transcript">Transcript:</label>
-            <textarea id="transcript" placeholder="Enter transcript with gaps marked using square brackets...">The [cat] sat on the [mat] and watched the [birds] in the [tree].</textarea>
+            <textarea id="transcript" placeholder="Enter transcript with gaps marked using square brackets...">The qu[ick] brown f[ox] jumps ov[er] the la[zy] dog.</textarea>
         </div>
 
         <div class="alert alert-info">
@@ -219,11 +229,8 @@ if (preg_match('/\.(css|js|mp3|wav|ogg)$/', $path)) {
                 <span class="dictation-play-counter">Played 0 of 2 times</span>
             </div>
 
-            <div class="dictation-question-text">
-                The <input type="text" class="dictation-gap" size="8" placeholder="___"> sat on the 
-                <input type="text" class="dictation-gap" size="8" placeholder="___"> and watched the 
-                <input type="text" class="dictation-gap" size="8" placeholder="___"> in the 
-                <input type="text" class="dictation-gap" size="8" placeholder="___">.
+            <div class="dictation-question-text" id="student-view">
+                The qu<input type="text" class="dictation-gap dictation-gap-partial" size="4" placeholder="ick"> brown f<input type="text" class="dictation-gap dictation-gap-partial" size="3" placeholder="ox"> jumps ov<input type="text" class="dictation-gap dictation-gap-partial" size="3" placeholder="er"> the la<input type="text" class="dictation-gap dictation-gap-partial" size="3" placeholder="zy"> dog.
             </div>
 
             <button class="btn btn-primary">Submit Answer</button>
@@ -286,14 +293,38 @@ Sentence Score = (Sum of word scores × correct word lengths) ÷ total character
     </div>
 
     <div class="demo-section">
-        <h3>C-Test Mode Example</h3>
-        <p>For text-only gap filling without audio:</p>
+        <h3>Enhanced C-Test Mode Examples</h3>
+        <p>Different display modes for text-only gap filling:</p>
+        
+        <h4>Standard Mode</h4>
         <div class="demo-question">
             <div class="dictation-question-text">
-                She under<input type="text" class="dictation-gap" size="6" placeholder="___"> the topic well and can 
-                expl<input type="text" class="dictation-gap" size="6" placeholder="___"> it clearly to others. This 
-                demonst<input type="text" class="dictation-gap" size="6" placeholder="___"> her deep 
-                compreh<input type="text" class="dictation-gap" size="6" placeholder="___"> of the subject matter.
+                She under<input type="text" class="dictation-gap-standard" size="6" placeholder="______"> the topic well and can 
+                expl<input type="text" class="dictation-gap-standard" size="6" placeholder="______"> it clearly to others.
+            </div>
+        </div>
+
+        <h4>Length Hints Mode</h4>
+        <div class="demo-question">
+            <div class="dictation-question-text">
+                She under<input type="text" class="dictation-gap-length" size="6" placeholder="_ _ _ _ _ _"> the topic well and can 
+                expl<input type="text" class="dictation-gap-length" size="6" placeholder="_ _ _"> it clearly to others.
+            </div>
+        </div>
+
+        <h4>Letter Hints Mode</h4>
+        <div class="demo-question">
+            <div class="dictation-question-text">
+                She under<input type="text" class="dictation-gap-letters" size="6" placeholder="s _ _ _ _ _"> the topic well and can 
+                expl<input type="text" class="dictation-gap-letters" size="6" placeholder="a _ _"> it clearly to others.
+            </div>
+        </div>
+
+        <h4>Partial Word Mode (C-test Style)</h4>
+        <div class="demo-question">
+            <div class="dictation-question-text">
+                She under<input type="text" class="dictation-gap-partial" size="6" placeholder="stands"> the topic well and can 
+                expl<input type="text" class="dictation-gap-partial" size="6" placeholder="ain"> it clearly to others.
             </div>
         </div>
     </div>
