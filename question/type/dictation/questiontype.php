@@ -190,9 +190,9 @@ class qtype_dictation extends question_type {
             $file = reset($files);
             return moodle_url::make_pluginfile_url(
                 $file->get_contextid(),
-                $file->get_component(),
-                $file->get_filearea(),
-                $file->get_itemid(),
+                'qtype_dictation',
+                'audio',
+                $questionid,
                 $file->get_filepath(),
                 $file->get_filename()
             );

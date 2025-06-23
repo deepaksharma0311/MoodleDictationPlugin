@@ -97,10 +97,16 @@ class qtype_dictation_renderer extends qtype_renderer {
         }
         
         $html .= html_writer::start_tag('audio', $audioattrs);
-        $html .= html_writer::empty_tag('source', array(
-            'src' => $question->audiofile,
-            'type' => 'audio/mpeg'
-        ));
+        
+        // Generate proper audio file URL
+        if ($question->audiofile) {
+            $audiourl = is_object($question->audiofile) ? $question->audiofile->out() : $question->audiofile;
+            $html .= html_writer::empty_tag('source', array(
+                'src' => $audiourl,
+                'type' => 'audio/mpeg'
+            ));
+        }
+        
         $html .= get_string('audionotsupported', 'qtype_dictation');
         $html .= html_writer::end_tag('audio');
 
