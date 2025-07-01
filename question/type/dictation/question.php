@@ -47,6 +47,9 @@ class qtype_dictation_question extends question_graded_automatically {
     /** @var string Display mode for gaps */
     public $displaymode;
 
+    /** @var string Scoring method: traditional or levenshtein */
+    public $scoringmethod;
+
     /**
      * Get expected data types for student responses.
      *
@@ -142,7 +145,7 @@ class qtype_dictation_question extends question_graded_automatically {
     }
 
     /**
-     * Calculate word score using normalized Levenshtein distance.
+     * Calculate word score using either traditional or Levenshtein scoring method.
      *
      * @param string $correct The correct word
      * @param string $student The student's input
@@ -161,16 +164,25 @@ class qtype_dictation_question extends question_graded_automatically {
         $correct = strtolower(trim($correct));
         $student = strtolower(trim($student));
         
-        if ($correct === $student) {
-            return 1.0;
+        // Check scoring method - default to Levenshtein if not set
+        $scoringmethod = isset($this->scoringmethod) ? $this->scoringmethod : 'levenshtein';
+        
+        if ($scoringmethod === 'traditional') {
+            // Traditional scoring: all or nothing
+            return ($correct === $student) ? 1.0 : 0.0;
+        } else {
+            // Levenshtein scoring: partial credit based on similarity
+            if ($correct === $student) {
+                return 1.0;
+            }
+            
+            // Calculate Levenshtein distance
+            $distance = levenshtein($correct, $student);
+            $maxlength = max(strlen($correct), strlen($student));
+            
+            // Normalized score: 1 - (distance / max_length)
+            return max(0, 1 - ($distance / $maxlength));
         }
-        
-        // Calculate Levenshtein distance
-        $distance = levenshtein($correct, $student);
-        $maxlength = max(strlen($correct), strlen($student));
-        
-        // Normalized score: 1 - (distance / max_length)
-        return max(0, 1 - ($distance / $maxlength));
     }
 
     /**

@@ -65,5 +65,17 @@ function xmldb_qtype_dictation_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2024121700, 'qtype', 'dictation');
     }
 
+    if ($oldversion < 2025070100) {
+        // Add scoringmethod field for research comparison between traditional and Levenshtein scoring
+        $table = new xmldb_table('qtype_dictation_options');
+        $field = new xmldb_field('scoringmethod', XMLDB_TYPE_CHAR, '20', null, XMLDB_NOTNULL, null, 'levenshtein', 'displaymode');
+
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        upgrade_plugin_savepoint(true, 2025070100, 'qtype', 'dictation');
+    }
+
     return true;
 }

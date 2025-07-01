@@ -101,6 +101,7 @@ class qtype_dictation extends question_type {
         $options->maxplays = $question->maxplays;
         $options->enableaudio = isset($question->enableaudio) ? 1 : 0;
         $options->displaymode = isset($question->displaymode) ? $question->displaymode : 'standard';
+        $options->scoringmethod = isset($question->scoringmethod) ? $question->scoringmethod : 'levenshtein';
         $options->gaps = $this->extract_gaps($question->transcript);
 
         if (!empty($options->id)) {
