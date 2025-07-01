@@ -98,3 +98,11 @@ $string['privacy:metadata:qtype_dictation_attempts:scores'] = 'The scores achiev
 $string['privacy:metadata:qtype_dictation_attempts:totalscore'] = 'The total score for the attempt.';
 $string['privacy:metadata:qtype_dictation_attempts:playcount'] = 'The number of times the user played the audio.';
 $string['privacy:metadata:qtype_dictation_attempts:timecreated'] = 'The time when the attempt was created.';
+
+// Scoring method strings
+$string['scoringmethod'] = 'Scoring method';
+$string['scoringtraditional'] = 'Traditional (all or nothing)';
+$string['scoringlevenshtein'] = 'Partial credit (similarity-based)';
+$string['scoringmethod_help'] = 'Choose how student answers are scored:<br>
+- <strong>Traditional:</strong> Each gap gets either full points or zero points<br>
+- <strong>Partial credit:</strong> Uses similarity algorithm to give partial points for close answers';

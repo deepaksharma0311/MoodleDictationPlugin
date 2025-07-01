@@ -13,6 +13,7 @@
         <FIELD NAME="enableaudio" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="1" SEQUENCE="false" COMMENT="Whether audio is enabled (1) or disabled (0) for C-test mode"/>
         <FIELD NAME="audiofile" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Audio file information for dictation mode"/>
         <FIELD NAME="displaymode" TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="standard" SEQUENCE="false" COMMENT="Display mode for gaps: standard, length, letters, partial"/>
+        <FIELD NAME="scoringmethod" TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="levenshtein" SEQUENCE="false" COMMENT="Scoring method: traditional or levenshtein"/>
         <FIELD NAME="gaps" TYPE="text" NOTNULL="true" SEQUENCE="false" COMMENT="JSON encoded array of gap words extracted from transcript"/>
       </FIELDS>
       <KEYS>

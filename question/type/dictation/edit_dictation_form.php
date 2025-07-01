@@ -76,6 +76,15 @@ class qtype_dictation_edit_form extends question_edit_form {
         $mform->addHelpButton('displaymode', 'displaymode', 'qtype_dictation');
         $mform->setDefault('displaymode', 'standard');
 
+        // Scoring method options
+        $scoringmethods = array(
+            'traditional' => get_string('scoringtraditional', 'qtype_dictation'),
+            'levenshtein' => get_string('scoringlevenshtein', 'qtype_dictation')
+        );
+        $mform->addElement('select', 'scoringmethod', get_string('scoringmethod', 'qtype_dictation'), $scoringmethods);
+        $mform->addHelpButton('scoringmethod', 'scoringmethod', 'qtype_dictation');
+        $mform->setDefault('scoringmethod', 'levenshtein');
+
         // Transcript text area
         $mform->addElement('textarea', 'transcript', get_string('transcript', 'qtype_dictation'),
             array('rows' => 8, 'cols' => 80, 'class' => 'dictation-transcript'));
@@ -118,6 +127,7 @@ class qtype_dictation_edit_form extends question_edit_form {
             $question->maxplays = $question->options->maxplays;
             $question->enableaudio = $question->options->enableaudio;
             $question->displaymode = isset($question->options->displaymode) ? $question->options->displaymode : 'standard';
+            $question->scoringmethod = isset($question->options->scoringmethod) ? $question->options->scoringmethod : 'levenshtein';
         }
 
         // Prepare audio file
