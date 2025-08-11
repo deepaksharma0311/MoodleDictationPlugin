@@ -18,11 +18,11 @@
  * Strings for component 'qtype_dictation', language 'en'
  *
  * @package    qtype_dictation
- * @copyright  2024 Your Name
+ * @copyright  2025 Deepak Sharma <deepak@palinfocom.net>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-$string['pluginname'] = 'Dictation';
+$string['pluginname'] = 'Dictation/C-test';
 $string['pluginname_help'] = 'Students listen to an audio recording and fill in missing words, or complete text gaps without audio (C-test mode).';
 $string['pluginnameadding'] = 'Adding a dictation question';
 $string['pluginnameediting'] = 'Editing a dictation question';
@@ -36,6 +36,10 @@ $string['audiofile_help'] = 'Upload an MP3, WAV, or OGG audio file for the dicta
 $string['audiofile_required'] = 'Audio file is required when audio is enabled.';
 $string['transcript'] = 'Transcript';
 $string['transcript_help'] = 'Enter the transcript text. Mark words to be filled in by students using square brackets, e.g., "She [went] to the [store]."';
+
+$string['leftaligntext'] = 'Left Align Text';
+$string['leftaligntext_desc'] = 'Left Align Text Description';
+$string['leftaligntext_help'] = 'For Left Align Text';
 $string['transcriptrequired'] = 'Transcript is required.';
 $string['maxplays'] = 'Maximum plays';
 $string['maxplays_help'] = 'Set the maximum number of times students can play the audio. Choose unlimited for no restrictions.';
@@ -98,7 +102,6 @@ $string['privacy:metadata:qtype_dictation_attempts:scores'] = 'The scores achiev
 $string['privacy:metadata:qtype_dictation_attempts:totalscore'] = 'The total score for the attempt.';
 $string['privacy:metadata:qtype_dictation_attempts:playcount'] = 'The number of times the user played the audio.';
 $string['privacy:metadata:qtype_dictation_attempts:timecreated'] = 'The time when the attempt was created.';
-
 // Scoring method strings
 $string['scoringmethod'] = 'Scoring method';
 $string['scoringtraditional'] = 'Traditional (all or nothing)';
@@ -106,3 +109,15 @@ $string['scoringlevenshtein'] = 'Partial credit (similarity-based)';
 $string['scoringmethod_help'] = 'Choose how student answers are scored:<br>
 - <strong>Traditional:</strong> Each gap gets either full points or zero points<br>
 - <strong>Partial credit:</strong> Uses similarity algorithm to give partial points for close answers';
+// Quiz-level export strings
+$string['exportquizdata'] = 'Export Quiz Dictation Data';
+$string['exportquizcsv'] = 'Export Complete Quiz Data';
+$string['exportallquizdata'] = 'Export All Dictation Data';
+$string['exportallquizdesc'] = 'Download CSV with all {$a} dictation question attempts from this quiz';
+$string['dictationquestionsfound'] = '{$a} dictation questions found in this quiz';
+$string['nodictationquestions'] = 'No dictation questions found in this quiz.';
+$string['noattemptsfound'] = 'No student attempts found for dictation questions.';
+$string['attempts'] = 'Attempts';
+$string['actions'] = 'Actions';
+$string['exportindividual'] = 'Export Individual Question';
+$string['exportindividualoptions'] = 'Individual question exports:';

@@ -18,19 +18,17 @@
  * CSV export script for dictation questions.
  *
  * @package    qtype_dictation
- * @copyright  2024 Your Name
+ * @copyright  2025 Deepak Sharma <deepak@palinfocom.net>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-require_once('../../../../config.php');
+require_once('../../../config.php');
 require_once($CFG->dirroot . '/question/type/dictation/classes/output/export_csv.php');
-
+global $PAGE;
 // Get parameters
 $questionid = required_param('questionid', PARAM_INT);
-$contextid = required_param('contextid', PARAM_INT);
-
-// Verify context and permissions
-$context = context::instance_by_id($contextid);
+$context = context_system::instance();
+$PAGE->set_context($context);
 require_login();
 require_capability('moodle/question:editall', $context);
 
@@ -38,4 +36,4 @@ require_capability('moodle/question:editall', $context);
 $question = $DB->get_record('question', array('id' => $questionid, 'qtype' => 'dictation'), '*', MUST_EXIST);
 
 // Export the data
-\qtype_dictation\output\export_csv::export_responses($questionid, $contextid);
+\qtype_dictation\output\export_csv::export_responses($questionid, 0);

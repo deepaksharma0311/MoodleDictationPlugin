@@ -1,13 +1,150 @@
-/* Dictation question type styles */
+/* Dictation Question Type Styles */
 
+/* Basic gap input styling */
+.dictation-gap {
+    text-align: center;
+    padding: 4px 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    margin: 0 2px;
+    font-size: inherit;
+    font-family: inherit;
+}
+
+/* Left-aligned text for input boxes when option is enabled */
+.dictation-gap-left-aligned {
+    text-align: left !important;
+}
+
+/* Focused gap styling */
+.dictation-gap:focus {
+    outline: none;
+    border-color: #007cba;
+    box-shadow: 0 0 4px rgba(0, 124, 186, 0.3);
+}
+
+/* Color feedback for partial matches - Change #2: Mark partial matches as red */
+.dictation-feedback .gap-feedback.incorrect .student-answer {
+    color: #d32f2f;
+    font-weight: bold;
+}
+
+.dictation-feedback .gap-feedback.correct .student-answer {
+    color: #388e3c;
+    font-weight: bold;
+}
+
+/* Different display modes */
+.dictation-gap-standard {
+    min-width: 80px;
+}
+
+.dictation-gap-length {
+    /* Dynamic width will be set inline based on word length */
+}
+
+.dictation-gap-letters {
+    min-width: 60px;
+}
+
+.dictation-gap-partial {
+    min-width: 40px;
+}
+
+/* Audio controls styling */
+.dictation-audio-controls {
+    margin: 10px 0;
+    padding: 10px;
+    background-color: #f8f9fa;
+    border-radius: 6px;
+    border: 1px solid #e9ecef;
+}
+
+.dictation-play-btn {
+    margin-right: 10px;
+}
+
+.dictation-play-counter {
+    font-size: 0.9em;
+    color: #666;
+    margin-left: 10px;
+}
+
+/* Question text container */
 .dictation-question-text {
     font-size: 1.1em;
     line-height: 1.6;
     margin: 15px 0;
     padding: 15px;
-    background: #f9f9f9;
-    border-radius: 5px;
+    background-color: #fafafa;
+    border-left: 4px solid #007cba;
+}
+
+/* Feedback sections */
+.dictation-feedback {
+    margin-top: 20px;
+}
+
+.dictation-feedback-details {
+    margin-top: 10px;
+}
+
+.gap-feedback {
+    margin-bottom: 15px;
+    padding: 10px;
+    border-radius: 4px;
+    border-left: 4px solid;
+}
+
+.gap-feedback.correct {
+    background-color: #e8f5e8;
+    border-left-color: #4caf50;
+}
+
+.gap-feedback.incorrect {
+    background-color: #ffeaea;
+    border-left-color: #f44336;
+}
+
+.gap-feedback .correct-answer {
+    margin: 5px 0;
+    font-style: italic;
+}
+
+.gap-feedback .student-answer {
+    margin: 5px 0;
+}
+
+.gap-feedback .gap-score {
+    margin: 5px 0;
+    font-weight: bold;
+}
+
+/* Preview styling in edit form */
+.dictation-preview {
+    margin: 15px 0;
+    padding: 15px;
+    background-color: #f5f5f5;
     border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .dictation-gap {
+        margin: 2px 0;
+        display: inline-block;
+        min-width: 60px;
+    }
+    
+    .dictation-question-text {
+        padding: 10px;
+        font-size: 1em;
+    }
+    
+    .dictation-audio-controls {
+        text-align: center;
+    }
 }
 
 .dictation-gap {
@@ -23,13 +160,13 @@
 
 /* Gap display mode styles */
 .dictation-gap-length {
-    font-family: monospace;
-    letter-spacing: 2px;
+   // font-family: monospace;
+    letter-spacing: 0px;
 }
 
 .dictation-gap-letters {
-    font-family: monospace;
-    letter-spacing: 1px;
+   // font-family: monospace;
+    letter-spacing: 0px;
 }
 
 .dictation-gap-partial {
@@ -210,7 +347,11 @@
     outline: 2px solid #007cba;
     outline-offset: 2px;
 }
-
+.ctype-question {
+    text-align: left !important;
+    padding-left: 0;
+    margin-left: 0;
+}
 /* High contrast mode support */
 @media (prefers-contrast: high) {
     .dictation-gap {

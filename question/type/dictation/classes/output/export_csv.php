@@ -48,15 +48,18 @@ class export_csv {
         $options = $DB->get_record('qtype_dictation_options', array('questionid' => $questionid), '*', MUST_EXIST);
         $gaps = json_decode($options->gaps, true);
 
-        // Get all attempts for this question
-        $sql = "SELECT qa.id as attemptid, qa.userid, qa.timemodified, qa.responsesummary,
+        // Get all attempts for this question with quiz attempt details
+        $sql = "SELECT da.id, da.userid, da.attemptid, da.responses, da.scores, da.totalscore, 
+                       da.playcount, da.timecreated, da.timemodified,
                        u.firstname, u.lastname, u.email,
-                       qas.state, qas.fraction
-                FROM {question_attempts} qa
-                JOIN {users} u ON u.id = qa.userid
-                LEFT JOIN {question_attempt_steps} qas ON qas.questionattemptid = qa.id
-                WHERE qa.questionid = ? AND qas.state LIKE '%graded%'
-                ORDER BY u.lastname, u.firstname, qa.timemodified";
+                       qa.timestart, qa.timefinish, qa.state AS attempt_state,
+                       q.name as quiz_name, qa.sumgrades
+                FROM {qtype_dictation_attempts} da
+                JOIN {user} u ON u.id = da.userid
+                LEFT JOIN {quiz_attempts} qa ON qa.id = da.attemptid
+                LEFT JOIN {quiz} q ON q.id = qa.quiz
+                WHERE da.questionid = ?
+                ORDER BY u.lastname, u.firstname, da.timemodified";
 
         $attempts = $DB->get_records_sql($sql, array($questionid));
 
@@ -67,23 +70,31 @@ class export_csv {
         // Prepare CSV data
         $csvdata = array();
         
-        // Create header row
+        // Create header row with standard quiz export format
         $header = array(
-            get_string('exportheader_student', 'qtype_dictation'),
-            get_string('exportheader_attempt', 'qtype_dictation'),
-            get_string('exportheader_question', 'qtype_dictation')
+            'Last name',
+            'First name', 
+            'Email address',
+            'Status',
+            'Started',
+            'Completed',
+            'Duration'
         );
 
-        // Add gap headers
+        // Add gap headers in new format: Q{questionid}_Gap{n}_Response | Q{questionid}_Gap{n}_Score | Q{questionid}_Gap{n}_Correct
         for ($i = 0; $i < count($gaps); $i++) {
-            $header[] = get_string('exportheader_gap', 'qtype_dictation', $i + 1);
-            $header[] = get_string('exportheader_gap_correct', 'qtype_dictation', $i + 1);
-            $header[] = get_string('exportheader_gap_score', 'qtype_dictation', $i + 1);
+            $gapnum = $i + 1;
+           
+           $header[] = "Q{$questionid}_Gap{$gapnum}_Correct";
+             $header[] = "Q{$questionid}_Gap{$gapnum}_Response";
+               $header[] = "Q{$questionid}_Gap{$gapnum}_Score";
+           
         }
 
-        $header[] = get_string('exportheader_totalscore', 'qtype_dictation');
-        $header[] = get_string('exportheader_playcount', 'qtype_dictation');
-        $header[] = get_string('exportheader_timecreated', 'qtype_dictation');
+        $header[] = 'Total Score';
+        $header[] = 'Audio Plays';
+        $header[] = 'Quiz Name';
+        $header[] = 'Quiz Total Score';
 
         $csvdata[] = $header;
 
@@ -91,37 +102,68 @@ class export_csv {
         foreach ($attempts as $attempt) {
             $row = array();
             
-            // Student info
-            $row[] = $attempt->firstname . ' ' . $attempt->lastname;
-            $row[] = $attempt->attemptid;
-            $row[] = format_string($question->name);
-
-            // Get step data for responses
-            $stepdata = self::get_step_data($attempt->attemptid);
+            // Standard quiz export fields
+            $row[] = $attempt->lastname;
+            $row[] = $attempt->firstname;
+            $row[] = $attempt->email;
             
-            // Process each gap
-            for ($i = 0; $i < count($gaps); $i++) {
-                $gapkey = 'gap_' . $i;
-                $correctword = $gaps[$i];
-                $studentword = isset($stepdata[$gapkey]) ? $stepdata[$gapkey] : '';
-                
-                // Calculate individual gap score
-                $gapscore = self::calculate_word_score($correctword, $studentword);
-                
-                $row[] = $studentword;
-                $row[] = $correctword;
-                $row[] = round($gapscore, 4);
+            // Status
+            $status = 'finished';
+            if (!empty($attempt->attempt_state)) {
+                $status = ($attempt->attempt_state == 'finished') ? 'finished' : 'in progress';
+            }
+            $row[] = $status;
+            
+            // Started timestamp
+            $started = !empty($attempt->timestart) ? userdate($attempt->timestart, '%Y-%m-%d %H:%M:%S') : 
+                      userdate($attempt->timecreated, '%Y-%m-%d %H:%M:%S');
+            $row[] = $started;
+            
+            // Completed timestamp  
+            $completed = !empty($attempt->timefinish) ? userdate($attempt->timefinish, '%Y-%m-%d %H:%M:%S') : 
+                        userdate($attempt->timemodified, '%Y-%m-%d %H:%M:%S');
+            $row[] = $completed;
+            
+            // Duration
+            if (!empty($attempt->timestart) && !empty($attempt->timefinish)) {
+                $duration = $attempt->timefinish - $attempt->timestart;
+                $minutes = floor($duration / 60);
+                $seconds = $duration % 60;
+                $row[] = sprintf('%d:%02d', $minutes, $seconds);
+            } else {
+                $row[] = '-';
             }
 
-            // Total score
-            $row[] = round($attempt->fraction, 4);
+            // Parse responses and scores from JSON
+            $responses = json_decode($attempt->responses, true) ?: array();
+            $scores = json_decode($attempt->scores, true) ?: array();
             
-            // Play count
-            $playcount = isset($stepdata['playcount']) ? $stepdata['playcount'] : 0;
-            $row[] = $playcount;
+            // Process each gap - response, score, and correct answer
+            for ($i = 0; $i < count($gaps); $i++) {
+                $gapkey = 'gap_' . $i;
+                $studentword = isset($responses[$gapkey]) ? $responses[$gapkey] : '';
+                $gapscore = isset($scores[$i]) ? $scores[$i] : 0;
+                
+                // Get correct answer(s) - handle multiple alternatives
+                $correctAnswers = is_array($gaps[$i]) ? $gaps[$i] : array($gaps[$i]);
+                $correctDisplay = implode(' / ', $correctAnswers);
+                 $row[] = $correctDisplay;
+                $row[] = $studentword;
+                $row[] = round($gapscore, 4);
+               
+            }
+
+            // Dictation question total score
+            $row[] = round($attempt->totalscore, 4);
             
-            // Time
-            $row[] = userdate($attempt->timemodified);
+            // Audio play count
+            $row[] = $attempt->playcount;
+            
+            // Quiz name
+            $row[] = !empty($attempt->quiz_name) ? format_string($attempt->quiz_name) : 'Question Bank';
+            
+            // Quiz total score
+            $row[] = !empty($attempt->sumgrades) ? round($attempt->sumgrades, 2) : '-';
 
             $csvdata[] = $row;
         }
@@ -141,31 +183,188 @@ class export_csv {
     }
 
     /**
-     * Get step data for a question attempt.
+     * Export all dictation questions data from a quiz to CSV format.
      *
-     * @param int $attemptid The attempt ID
-     * @return array Array of step data
+     * @param int $quizid The quiz ID to export data for
+     * @param int $contextid The context ID
+     * @return void
      */
-    private static function get_step_data($attemptid) {
-        global $DB;
+    public static function export_quiz_data($quizid, $contextid) {
+        global $DB, $CFG;
 
-        $sql = "SELECT qad.name, qad.value
-                FROM {question_attempt_step_data} qad
-                JOIN {question_attempt_steps} qas ON qas.id = qad.attemptstepid
-                WHERE qas.questionattemptid = ?
-                ORDER BY qas.sequencenumber DESC";
-
-        $stepdata = array();
-        $records = $DB->get_records_sql($sql, array($attemptid));
+        // Get quiz details
+        $quiz = $DB->get_record('quiz', array('id' => $quizid), '*', MUST_EXIST);
         
-        foreach ($records as $record) {
-            if (!isset($stepdata[$record->name])) {
-                $stepdata[$record->name] = $record->value;
-            }
+        // Get all dictation questions in this quiz with attempts
+        $sql = "SELECT DISTINCT q.id, q.name, qdo.gaps, qs.slot
+                FROM {quiz_slots} qs
+                JOIN {question} q ON q.id = qs.questionid
+                JOIN {qtype_dictation_options} qdo ON qdo.questionid = q.id
+                WHERE qs.quizid = ? AND q.qtype = 'dictation'
+                ORDER BY qs.slot";
+
+        $questions = $DB->get_records_sql($sql, array($quizid));
+
+        if (empty($questions)) {
+            print_error('nodictationquestions', 'qtype_dictation');
         }
 
-        return $stepdata;
+        // Get all attempts for these questions
+        $questionids = array_keys($questions);
+        list($insql, $params) = $DB->get_in_or_equal($questionids, SQL_PARAMS_NUMBERED);
+        $params[] = $quizid;
+
+        $attemptsql = "SELECT da.id, da.userid, da.questionid, da.attemptid, da.responses, da.scores, 
+                              da.totalscore, da.playcount, da.timecreated, da.timemodified,
+                              u.firstname, u.lastname, u.email,
+                              qa.timestart, qa.timefinish, qa.state AS attempt_state, qa.sumgrades,
+                              q.name as question_name, q.id as qid
+                       FROM {qtype_dictation_attempts} da
+                       JOIN {user} u ON u.id = da.userid
+                       JOIN {question} q ON q.id = da.questionid
+                       LEFT JOIN {quiz_attempts} qa ON qa.id = da.attemptid AND qa.quiz = ?
+                       WHERE da.questionid $insql
+                       ORDER BY u.lastname, u.firstname, q.id, da.timemodified";
+
+        $attempts = $DB->get_records_sql($attemptsql, $params);
+
+        if (empty($attempts)) {
+            print_error('noattemptsfound', 'qtype_dictation');
+        }
+
+        // Prepare CSV data
+        $csvdata = array();
+        
+        // Create comprehensive header row
+        $header = array(
+            'Last name',
+            'First name', 
+            'Email address',
+            'Status',
+            'Started',
+            'Completed',
+            'Duration',
+            'Quiz Total Score',
+            'Question Name',
+            'Question ID',
+            'Question Score'
+        );
+
+        // Add gap headers for all questions
+        $maxgaps = 0;
+        $questiongaps = array();
+        foreach ($questions as $question) {
+            $gaps = json_decode($question->gaps, true);
+            $questiongaps[$question->id] = $gaps;
+            $maxgaps = max($maxgaps, count($gaps));
+        }
+
+        // Add column headers for maximum number of gaps
+        for ($i = 1; $i <= $maxgaps; $i++) {
+              $header[] = "Gap{$i}_Correct";
+            $header[] = "Gap{$i}_Response";
+            
+         
+            $header[] = "Gap{$i}_Score";
+        }
+
+        $header[] = 'Audio Plays';
+
+        $csvdata[] = $header;
+
+        // Process each attempt
+        foreach ($attempts as $attempt) {
+            $row = array();
+            
+            // Standard quiz export fields
+            $row[] = $attempt->lastname;
+            $row[] = $attempt->firstname;
+            $row[] = $attempt->email;
+            
+            // Status
+            $status = 'finished';
+            if (!empty($attempt->attempt_state)) {
+                $status = ($attempt->attempt_state == 'finished') ? 'finished' : 'in progress';
+            }
+            $row[] = $status;
+            
+            // Started timestamp
+            $started = !empty($attempt->timestart) ? userdate($attempt->timestart, '%Y-%m-%d %H:%M:%S') : 
+                      userdate($attempt->timecreated, '%Y-%m-%d %H:%M:%S');
+            $row[] = $started;
+            
+            // Completed timestamp  
+            $completed = !empty($attempt->timefinish) ? userdate($attempt->timefinish, '%Y-%m-%d %H:%M:%S') : 
+                        userdate($attempt->timemodified, '%Y-%m-%d %H:%M:%S');
+            $row[] = $completed;
+            
+            // Duration
+            if (!empty($attempt->timestart) && !empty($attempt->timefinish)) {
+                $duration = $attempt->timefinish - $attempt->timestart;
+                $minutes = floor($duration / 60);
+                $seconds = $duration % 60;
+                $row[] = sprintf('%d:%02d', $minutes, $seconds);
+            } else {
+                $row[] = '-';
+            }
+
+            // Quiz total score
+            $row[] = !empty($attempt->sumgrades) ? round($attempt->sumgrades, 2) : '-';
+            
+            // Question info
+            $row[] = format_string($attempt->question_name);
+            $row[] = $attempt->questionid;
+            $row[] = round($attempt->totalscore, 4);
+
+            // Parse responses and scores from JSON
+            $responses = json_decode($attempt->responses, true) ?: array();
+            $scores = json_decode($attempt->scores, true) ?: array();
+            $gaps = $questiongaps[$attempt->questionid];
+            
+            // Process gaps for this question
+            for ($i = 0; $i < $maxgaps; $i++) {
+                if ($i < count($gaps)) {
+                    $gapkey = 'gap_' . $i;
+                    $studentword = isset($responses[$gapkey]) ? $responses[$gapkey] : '';
+                    $gapscore = isset($scores[$i]) ? $scores[$i] : 0;
+                    
+                    // Get correct answer(s)
+                    $correctAnswers = is_array($gaps[$i]) ? $gaps[$i] : array($gaps[$i]);
+                    $correctDisplay = implode(' / ', $correctAnswers);
+                    
+                    $row[] = $studentword;
+                    $row[] = round($gapscore, 4);
+                    $row[] = $correctDisplay;
+                } else {
+                    // Empty gaps for questions with fewer gaps
+                    $row[] = '';
+                    $row[] = '';
+                    $row[] = '';
+                }
+            }
+
+            // Audio play count
+            $row[] = $attempt->playcount;
+
+            $csvdata[] = $row;
+        }
+
+        // Generate filename
+        $quizname = preg_replace('/[^a-zA-Z0-9_-]/', '_', $quiz->name);
+        $filename = "quiz_{$quizname}_dictation_export_" . date('Y-m-d_H-i-s') . ".csv";
+        
+        // Output CSV
+        $csvexport = new \csv_export_writer();
+        $csvexport->set_filename($filename);
+        
+        foreach ($csvdata as $row) {
+            $csvexport->add_data($row);
+        }
+        
+        $csvexport->download_file();
     }
+
+
 
     /**
      * Calculate word score using normalized Levenshtein distance.

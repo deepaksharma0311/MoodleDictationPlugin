@@ -18,7 +18,7 @@
  * Question type class for the dictation question type.
  *
  * @package    qtype_dictation
- * @copyright  2024 Your Name
+ * @copyright  2025 Deepak Sharma <deepak@palinfocom.net>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -44,7 +44,9 @@ class qtype_dictation extends question_type {
             'maxplays',
             'enableaudio',
             'displaymode',
-            'gaps'
+            'scoringmethod',
+            'gaps',
+            'leftaligntext'
         );
     }
 
@@ -89,7 +91,8 @@ class qtype_dictation extends question_type {
         
         $context = $question->context;
         $result = new stdClass();
-
+       //  print_r($question);
+       // exit();
         // Save options to database
         $options = $DB->get_record('qtype_dictation_options', array('questionid' => $question->id));
         if (!$options) {
@@ -102,6 +105,7 @@ class qtype_dictation extends question_type {
         $options->enableaudio = isset($question->enableaudio) ? 1 : 0;
         $options->displaymode = isset($question->displaymode) ? $question->displaymode : 'standard';
         $options->scoringmethod = isset($question->scoringmethod) ? $question->scoringmethod : 'levenshtein';
+        $options->leftaligntext = isset($question->leftaligntext) ? 1 : 0;
         $options->gaps = $this->extract_gaps($question->transcript);
 
         if (!empty($options->id)) {
@@ -128,8 +132,19 @@ class qtype_dictation extends question_type {
         $gaps = array();
         preg_match_all('/\[([^\]]+)\]/', $transcript, $matches);
         
+        // foreach ($matches[1] as $gap) {
+        //     $gaps[] = trim($gap);
+        // }
         foreach ($matches[1] as $gap) {
-            $gaps[] = trim($gap);
+            // Check if gap contains multiple comma-separated answers
+            if (strpos($gap, ',') !== false) {
+                // Split by comma and trim each answer
+                $alternatives = array_map('trim', explode(',', $gap));
+                $gaps[] = $alternatives;
+            } else {
+                // Single answer - still store as array for consistency
+                $gaps[] = array(trim($gap));
+            }
         }
         
         return json_encode($gaps);
@@ -166,8 +181,10 @@ class qtype_dictation extends question_type {
         $question->maxplays = $questiondata->options->maxplays;
         $question->enableaudio = $questiondata->options->enableaudio;
         $question->displaymode = isset($questiondata->options->displaymode) ? $questiondata->options->displaymode : 'standard';
+        $question->leftaligntext = isset($questiondata->options->leftaligntext) ? $questiondata->options->leftaligntext : 0;
+        $question->scoringmethod = isset($questiondata->options->scoringmethod) ? $questiondata->options->scoringmethod : 'levenshtein';
         $question->gaps = json_decode($questiondata->options->gaps, true);
-        
+      
         // Load audio file information
         if ($question->enableaudio) {
             $question->audiofile = $this->get_audio_file_url($questiondata->id, $questiondata->contextid);
@@ -219,15 +236,77 @@ class qtype_dictation extends question_type {
      * @return array
      */
     public function get_possible_responses($question) {
+        global $DB;
+        
         $responses = array();
         
-        foreach ($question->gaps as $index => $gap) {
-            $responses[$index] = array(
-                $gap => question_classified_response::response_for_grade(1, $gap),
-                null => question_classified_response::response_for_grade(0, get_string('incorrect', 'qtype_dictation'))
-            );
+        // Get the question options to access gaps data
+        $options = $DB->get_record('qtype_dictation_options', array('questionid' => $question->id));
+        if (!$options || empty($options->gaps)) {
+            return $responses;
+        }
+        
+        $gaps = json_decode($options->gaps, true);
+        if (!$gaps) {
+            return $responses;
+        }
+        
+        foreach ($gaps as $index => $gap) {
+            // Handle multiple correct answers per gap
+            $correctAnswers = is_array($gap) ? $gap : array($gap);
+            $gapresponses = array();
+            
+            // Add each correct answer as a possible response with grade 1
+            foreach ($correctAnswers as $correct) {
+                $gapresponses[$correct] = new question_classified_response($correct, 1.0, $correct);
+            }
+            
+            // Add null response for incorrect answers
+            $gapresponses[null] = new question_classified_response(null, 0.0, get_string('incorrect', 'qtype_dictation'));
+        
         }
         
         return $responses;
+    }
+
+
+    /**
+     * Get extra question bank actions for this question type.
+     * Adds CSV export link to question bank.
+     *
+     * @param object $question The question object
+     * @param string $previewurl Preview URL for the question  
+     * @param object $displaydata Display data for the question
+     * @return string Additional HTML for question actions
+     */
+    public function get_extra_question_bank_actions(stdClass $question): array {
+        global $OUTPUT;
+        
+        $actions = [];
+        
+        // Only show export link if question has attempts
+        $attemptcount = $this->count_question_attempts($question->id);
+        if ($attemptcount > 0) {
+            $exporturl = new moodle_url('/question/type/dictation/export_csv.php', 
+                array('questionid' => $question->id));
+            $actions[] = $OUTPUT->action_link($exporturl, 
+                'Export to CSV' . " ($attemptcount)", 
+                null, 
+                array('title' =>  'Export to CSV')
+            );
+        }
+        
+        return $actions;
+    }
+    
+    /**
+     * Count attempts for a given question.
+     *
+     * @param int $questionid Question ID
+     * @return int Number of attempts
+     */
+    private function count_question_attempts($questionid) {
+        global $DB;
+        return $DB->count_records('qtype_dictation_attempts', array('questionid' => $questionid));
     }
 }

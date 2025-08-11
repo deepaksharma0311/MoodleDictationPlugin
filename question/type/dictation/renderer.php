@@ -18,7 +18,7 @@
  * Dictation question renderer class.
  *
  * @package    qtype_dictation
- * @copyright  2024 Your Name
+ * @copyright  2025 Deepak Sharma <deepak@palinfocom.net>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -38,10 +38,11 @@ class qtype_dictation_renderer extends qtype_renderer {
      */
     public function formulation_and_controls(question_attempt $qa, question_display_options $options) {
         global $PAGE;
-        
+
+        $qaid = $qa->get_database_id();
         $question = $qa->get_question();
         $currentanswer = $qa->get_last_qt_data();
-        
+       // print_r($question);
         // Display the question text
         $questiontext = $question->format_questiontext($qa);
         $result = html_writer::tag('div', $questiontext, array('class' => 'qtext'));
@@ -53,12 +54,13 @@ class qtype_dictation_renderer extends qtype_renderer {
 
         // Add the question text with input gaps
         $result .= $this->render_question_text_with_gaps($question, $qa, $currentanswer);
-
+       
         // Add JavaScript for audio control and form handling
         $PAGE->requires->js_call_amd('qtype_dictation/dictation', 'init', array(
             'questionid' => $question->id,
             'maxplays' => $question->maxplays,
-            'enableaudio' => $question->enableaudio
+            'enableaudio' => $question->enableaudio,
+            'qaid' => $qaid
         ));
 
         if ($qa->get_state() == question_state::$invalid) {
@@ -83,13 +85,14 @@ class qtype_dictation_renderer extends qtype_renderer {
         $maxplays = (int)$question->maxplays;
         $disabled = ($maxplays > 0 && $playcount >= $maxplays);
 
-        $html = html_writer::start_tag('div', array('class' => 'dictation-audio-player'));
+        $html = html_writer::start_tag('div', array('class' => 'dictation-audio-player','id' => 'q' . $question->id));
         
         // Audio element
         $audioattrs = array(
             'id' => 'dictation-audio-' . $question->id,
             'class' => 'dictation-audio',
-            'preload' => 'metadata'
+            'preload' => 'metadata',
+
         );
         
         if ($disabled) {
@@ -114,7 +117,7 @@ class qtype_dictation_renderer extends qtype_renderer {
         $buttonattrs = array(
             'type' => 'button',
             'id' => 'dictation-play-btn-' . $question->id,
-            'class' => 'btn btn-primary dictation-play-btn'
+            'class' => 'btn btn-primary audio-play-btn'
         );
         
         if ($disabled) {
@@ -164,24 +167,52 @@ class qtype_dictation_renderer extends qtype_renderer {
         $displaymode = isset($question->displaymode) ? $question->displaymode : 'standard';
         
         // Replace [word] with input boxes based on display mode
-        $text = preg_replace_callback('/\[([^\]]+)\]/', function($matches) use (&$gapindex, $qa, $currentanswer, $displaymode) {
+        $text = preg_replace_callback('/\[([^\]]+)\]/', function($matches) use (&$gapindex, $qa, $currentanswer, $displaymode, $question) {
             $fieldname = $qa->get_qt_field_name('gap_' . $gapindex);
             $currentvalue = isset($currentanswer['gap_' . $gapindex]) ? $currentanswer['gap_' . $gapindex] : '';
-            $correctword = $matches[1];
+            //$correctword = $matches[1];
+            // Handle multiple correct answers - use first one for display calculations
+            $gapContent = $matches[1];
+            $correctAnswers = strpos($gapContent, ',') !== false ? 
+                array_map('trim', explode(',', $gapContent)) : array(trim($gapContent));
+            $primaryWord = $correctAnswers[0]; // Use first answer for placeholder/sizing
             
             // Generate placeholder based on display mode
-            $placeholder = $this->generate_gap_placeholder($correctword, $displaymode);
+            $placeholder = $this->generate_gap_placeholder($primaryWord, $displaymode);
+            
+            // Set CSS class based on text alignment preference
+            $cssclass = 'dictation-gap dictation-gap-' . $displaymode;
+            if (!empty($question->leftaligntext)) {
+                $cssclass .= ' dictation-gap-left-aligned';
+            }
+            //echo "<pre>";
+            //print_r($question);
+           // echo $question->enableaudio;
+            if($question->enableaudio!=1){
+                $cssclass .= ' ctype-question';
+            }
+            
+            // Calculate width for length hints mode  
+            $inputsize = max(8, strlen($primaryWord));
+            if ($displaymode === 'length') {
+                $inputsize = (strlen($primaryWord) * 1.5); // Add small buffer
+            }
+            // Generate placeholder based on display mode
+           // $placeholder = $this->generate_gap_placeholder($correctword, $displaymode);
             
             $inputhtml = html_writer::empty_tag('input', array(
                 'type' => 'text',
                 'name' => $fieldname,
                 'id' => $fieldname,
                 'value' => $currentvalue,
-                'class' => 'dictation-gap dictation-gap-' . $displaymode,
-                'size' => max(8, strlen($correctword)),
+                'class' => $cssclass,
+                'size' => $inputsize,
+               // 'size' => max(8, strlen($correctword)),
                 'placeholder' => $placeholder,
                 'autocomplete' => 'off',
-                'data-correct-length' => strlen($correctword)
+                //'data-correct-length' => strlen($correctword)
+                'data-correct-length' => strlen($primaryWord),
+                'title' => count($correctAnswers) > 1 ? 'Multiple answers accepted: ' : ''
             ));
             $gapindex++;
             return $inputhtml;
@@ -201,7 +232,9 @@ class qtype_dictation_renderer extends qtype_renderer {
         switch ($displaymode) {
             case 'length':
                 // One underscore per letter: _ _ _ _
-                return str_repeat('_ ', strlen($correctword));
+                //return str_repeat('_ ', strlen($correctword));
+                $length = strlen($correctword);
+                return trim(str_repeat('_ ', $length));
                 
             case 'letters':
                 // Show individual letter positions: g o _ _
@@ -296,7 +329,7 @@ class qtype_dictation_renderer extends qtype_renderer {
     public function correct_response(question_attempt $qa) {
         $question = $qa->get_question();
         $correctresponse = $question->get_correct_response();
-        
+       
         if (empty($correctresponse)) {
             return '';
         }
@@ -308,7 +341,7 @@ class qtype_dictation_renderer extends qtype_renderer {
         for ($i = 0; $i < count($question->gaps); $i++) {
             $gapkey = 'gap_' . $i;
             if (isset($correctresponse[$gapkey])) {
-                $answers[] = ($i + 1) . ': ' . $correctresponse[$gapkey];
+                $answers[] = ($i + 1) . ': ' . $correctresponse[$gapkey][0];
             }
         }
         

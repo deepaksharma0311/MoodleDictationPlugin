@@ -18,7 +18,7 @@
  * Question definition class for dictation questions.
  *
  * @package    qtype_dictation
- * @copyright  2024 Your Name
+ * @copyright  2025 Deepak Sharma <deepak@palinfocom.net>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -43,6 +43,9 @@ class qtype_dictation_question extends question_graded_automatically {
 
     /** @var array Array of gap words */
     public $gaps;
+
+    /** @var array Array of gap words */
+    public $leftaligntext;
 
     /** @var string Display mode for gaps */
     public $displaymode;
@@ -123,23 +126,34 @@ class qtype_dictation_question extends question_graded_automatically {
     public function grade_response(array $response) {
         $totalweight = 0;
         $totalcorrect = 0;
-        
+        $gapscores = array();
         for ($i = 0; $i < count($this->gaps); $i++) {
             $gapkey = 'gap_' . $i;
-            $correctword = $this->gaps[$i];
+            $correctword = $this->gaps[$i][0];
             $studentword = isset($response[$gapkey]) ? $response[$gapkey] : '';
             
             // Calculate word weight based on length
-            $wordweight = strlen($correctword);
+             $scoringmethod = isset($this->scoringmethod) ? $this->scoringmethod : 'levenshtein';
+        
+            if ($scoringmethod === 'traditional') {
+                $wordweight = 1.0;
+            }
+            else{
+                $wordweight = strlen($correctword);
+            }
+            
             $totalweight += $wordweight;
             
             // Calculate Levenshtein distance score
             $wordscore = $this->calculate_word_score($correctword, $studentword);
             $totalcorrect += $wordscore * $wordweight;
+            $gapscores[] = $wordscore;
         }
         
         // Calculate final grade as weighted average
         $grade = $totalweight > 0 ? $totalcorrect / $totalweight : 0;
+
+        $this->record_attempt($response, $gapscores, $grade);
         
         return array($grade, question_state::graded_state_for_fraction($grade));
     }
@@ -161,8 +175,37 @@ class qtype_dictation_question extends question_graded_automatically {
         }
         
         // Normalize case for comparison
-        $correct = strtolower(trim($correct));
+       // $correct = strtolower(trim($correct));
+       // $student = strtolower(trim($student));
+         // Normalize student input
         $student = strtolower(trim($student));
+        
+        // Handle multiple correct answers
+        $correctAnswers = is_array($correct) ? $correct : array($correct);
+        $bestScore = 0.0;
+        
+        foreach ($correctAnswers as $correctWord) {
+            $correctWord = strtolower(trim($correctWord));
+            $score = $this->calculate_single_word_score($correctWord, $student);
+            $bestScore = max($bestScore, $score);
+            
+            // If we get a perfect match, no need to check other alternatives
+            if ($score >= 1.0) {
+                break;
+            }
+        }
+        
+        return $bestScore;
+    }
+    
+    /**
+     * Calculate score for a single word using the selected scoring method.
+     *
+     * @param string $correct The correct word
+     * @param string $student The student's input
+     * @return float Score between 0 and 1
+     */
+    private function calculate_single_word_score($correct, $student) {
         
         // Check scoring method - default to Levenshtein if not set
         $scoringmethod = isset($this->scoringmethod) ? $this->scoringmethod : 'levenshtein';
@@ -196,8 +239,8 @@ class qtype_dictation_question extends question_graded_automatically {
         
         for ($i = 0; $i < count($this->gaps); $i++) {
             $gapkey = 'gap_' . $i;
-            if (isset($response[$gapkey]) && $response[$gapkey] !== '') {
-                $parts[] = $response[$gapkey];
+            if (isset($response[$gapkey][0]) && $response[$gapkey][0] !== '') {
+                $parts[] = $response[$gapkey][0];
             }
         }
         
@@ -265,16 +308,138 @@ class qtype_dictation_question extends question_graded_automatically {
             $studentword = isset($response[$gapkey]) ? $response[$gapkey] : '';
             
             $wordscore = $this->calculate_word_score($correctword, $studentword);
+            // Format correct answer(s) for display
+            $correctDisplay = is_array($correctword) ? implode(' / ', $correctword) : $correctword;
             
             $feedback[] = array(
                 'gap' => $i,
-                'correct' => $correctword,
+                'correct' => $correctDisplay,
                 'student' => $studentword,
                 'score' => $wordscore,
-                'iscorrect' => $wordscore >= 0.8 // Consider 80% or higher as correct
+                'iscorrect' => $wordscore >= 1.0 // Consider 80% or higher as correct
             );
         }
         
         return $feedback;
+    }
+
+
+    /**
+     * Record student attempt for research and analysis purposes.
+     *
+     * @param array $response Student responses
+     * @param array $gapscores Individual gap scores
+     * @param float $totalscore Total weighted score
+     */
+    private function record_attempt(array $response, array $gapscores, $totalscore) {
+        global $DB, $USER;
+        
+        // Only record if we have a valid user and question attempt context
+        if (empty($USER->id) || empty($this->id)) {
+            return;
+        }
+        
+        // Get the current question attempt ID from the global context
+        $attemptid = $this->get_current_attempt_id();
+        if (!$attemptid) {
+            return;
+        }
+        
+        // Prepare student responses (remove non-gap data)
+        $studentresponses = array();
+        foreach ($response as $key => $value) {
+            if (strpos($key, 'gap_') === 0) {
+                $studentresponses[$key] = $value;
+            }
+        }
+        
+        // Get play count
+        $playcount = isset($response['playcount']) ? intval($response['playcount']) : 0;
+        
+        // Check if attempt already exists (update vs insert)
+        $existingattempt = $DB->get_record('qtype_dictation_attempts', array(
+            'questionid' => $this->id,
+            'userid' => $USER->id,
+            'attemptid' => $attemptid
+        ));
+        
+        $now = time();
+        
+        if ($existingattempt) {
+            // Update existing attempt
+            $existingattempt->responses = json_encode($studentresponses);
+            $existingattempt->scores = json_encode($gapscores);
+            $existingattempt->totalscore = $totalscore;
+            $existingattempt->playcount = $playcount;
+            $existingattempt->timemodified = $now;
+            
+            $DB->update_record('qtype_dictation_attempts', $existingattempt);
+        } else {
+            // Create new attempt record
+            $attemptrecord = new stdClass();
+            $attemptrecord->questionid = $this->id;
+            $attemptrecord->userid = $USER->id;
+            $attemptrecord->attemptid = $attemptid;
+            $attemptrecord->responses = json_encode($studentresponses);
+            $attemptrecord->scores = json_encode($gapscores);
+            $attemptrecord->totalscore = $totalscore;
+            $attemptrecord->playcount = $playcount;
+            $attemptrecord->timecreated = $now;
+            $attemptrecord->timemodified = $now;
+            
+            $DB->insert_record('qtype_dictation_attempts', $attemptrecord);
+        }
+    }
+    
+    /**
+     * Get the current question attempt ID from the global context.
+     *
+     * @return int|null The attempt ID or null if not found
+     */
+    private function get_current_attempt_id() {
+        global $PAGE, $DB;
+        
+        // Method 1: Try to get from page URL parameters
+        if (isset($PAGE->url) && $PAGE->url->get_param('attempt')) {
+            return intval($PAGE->url->get_param('attempt'));
+        }
+        
+        // Method 2: Try to get from HTTP parameters
+        if (isset($_GET['attempt'])) {
+            return intval($_GET['attempt']);
+        }
+        
+        if (isset($_POST['attempt'])) {
+            return intval($_POST['attempt']);
+        }
+        
+        // Method 3: Try to get from current question usage
+        if (isset($PAGE->cm) && $PAGE->cm->id) {
+            try {
+                $context = context_module::instance($PAGE->cm->id);
+                $sql = "SELECT qa.id 
+                        FROM {question_attempts} qa
+                        JOIN {question_usages} qu ON qu.id = qa.questionusageid
+                        WHERE qa.questionid = ? AND qu.contextid = ?
+                        ORDER BY qa.timemodified DESC
+                        LIMIT 1";
+                
+                $result = $DB->get_record_sql($sql, array($this->id, $context->id));
+                
+                if ($result) {
+                    return intval($result->id);
+                }
+            } catch (Exception $e) {
+                // Context not available, continue to next method
+            }
+        }
+        
+        // Method 4: Generate a unique session-based identifier if no attempt ID is found
+        // This ensures we can still track attempts even in preview mode
+        if (session_id()) {
+            return crc32(session_id() . '_' . $this->id . '_' . time());
+        }
+        
+        return null;
     }
 }

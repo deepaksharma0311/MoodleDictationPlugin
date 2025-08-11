@@ -18,14 +18,14 @@
  * Version information for the dictation question type.
  *
  * @package    qtype_dictation
- * @copyright  2024 Your Name
+ * @copyright  2025 Deepak Sharma <deepak@palinfocom.net>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'qtype_dictation';
-$plugin->version = 2024121700;
+$plugin->version = 2024122100;
 $plugin->requires = 2020110900; // Moodle 3.10.0
 $plugin->maturity = MATURITY_STABLE;
 $plugin->release = '1.0.0';

@@ -1,26 +1,3 @@
-// This file is part of Moodle - http://moodle.org/
-//
-// Moodle is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// Moodle is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
-
-/**
- * JavaScript for dictation question type functionality.
- *
- * @module     qtype_dictation/dictation
- * @copyright  2024 Your Name
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- */
-
 define(['jquery'], function($) {
     'use strict';
 
@@ -36,20 +13,23 @@ define(['jquery'], function($) {
      * @param {number} params.maxplays Maximum number of plays allowed
      * @param {boolean} params.enableaudio Whether audio is enabled
      */
-    function init(params) {
-        maxPlays = params.maxplays || 0;
-        enableAudio = params.enableaudio;
-        
-        var questionContainer = $('#q' + params.questionid);
-        if (questionContainer.length === 0) {
+    function init(questionid,maxplays,enableaudio, qaid) {
+        maxPlays = maxplays || 0;
+        enableAudio = enableaudio;    
+        $( document ).ready(function() {
+      
+        var questionContainer = $('#q'+questionid);
+
+        if (questionContainer.length === 0) {         
             // Fallback: look for any dictation question container
             questionContainer = $('.qtype_dictation').first();
         }
-
-        if (questionContainer.length > 0) {
-            setupAudioPlayer(questionContainer);
+     
+        if (questionContainer.length > 0) {             
+            setupAudioPlayer(questionContainer,qaid);
             setupGapFocus(questionContainer);
         }
+      });
     }
 
     /**
@@ -57,11 +37,15 @@ define(['jquery'], function($) {
      *
      * @param {jQuery} container The question container
      */
-    function setupAudioPlayer(container) {
+    function setupAudioPlayer(container,qaid) {
         var audioElement = container.find('audio').first();
         var playButton = container.find('.audio-play-btn');
-        var counterElement = container.find('.play-counter');
+        var counterElement = container.find('.dictation-play-counter');
         var playCountInput = container.find('input[name*="playcount"]');
+
+        var questionId = container.attr('id') || 'default';
+        var isPlaying = false;
+        var hasPlayedCurrentSession = false;
 
         if (audioElement.length === 0 || !enableAudio) {
             // Hide audio controls if no audio or audio disabled
@@ -70,9 +54,25 @@ define(['jquery'], function($) {
         }
 
         // Get current play count from hidden input
+        // if (playCountInput.length > 0 && playCountInput.val()) {
+        //     playCount = parseInt(playCountInput.val()) || 0;
+        // }
+
+         // Get current play count from multiple sources for robustness
+        var storedCount = 0;
         if (playCountInput.length > 0 && playCountInput.val()) {
-            playCount = parseInt(playCountInput.val()) || 0;
+            storedCount = parseInt(playCountInput.val()) || 0;
         }
+        
+        // Check localStorage as backup (survives page refresh)
+        var localStorageKey = 'dictation_playcount_' + questionId+ '_' + qaid;
+        var localStorageCount = parseInt(localStorage.getItem(localStorageKey)) || 0;
+        
+        // Use the higher count to prevent bypassing limits
+        playCount = Math.max(storedCount, localStorageCount);
+        
+        // Update both storage methods immediately
+        updatePlayCount();
 
         updateButtonState();
         updateCounter();
@@ -86,18 +86,77 @@ define(['jquery'], function($) {
         });
 
         // Audio ended handler
-        audioElement.on('ended', function() {
-            playCount++;
-            updatePlayCount();
-            updateButtonState();
-            updateCounter();
+        // audioElement.on('ended', function() {
+        //     playCount++;
+        //     updatePlayCount();
+        //     updateButtonState();
+        //     updateCounter();
+        // });
+
+        // Audio play handler - increment count immediately when play starts
+        audioElement.on('play', function() {
+            if (!hasPlayedCurrentSession) {
+                playCount++;
+                hasPlayedCurrentSession = true;
+                isPlaying = true;
+                
+                // Update count immediately to prevent refresh bypassing
+                updatePlayCount();
+                updateButtonState();
+                updateCounter();
+            }
         });
+
+        // Audio ended handler - reset session flag
+        audioElement.on('ended', function() {
+            hasPlayedCurrentSession = false;
+            isPlaying = false;
+        });
+
+        // Audio pause handler - reset session flag
+        audioElement.on('pause', function() {
+            hasPlayedCurrentSession = false;
+            isPlaying = false;
+        });
+
 
         // Audio error handler
         audioElement.on('error', function() {
             console.error('Audio failed to load');
             playButton.prop('disabled', true).text('Audio Error');
+            hasPlayedCurrentSession = false;
+            isPlaying = false;
         });
+
+        // Handle page unload to save state
+        window.addEventListener('beforeunload', function() {
+            if (isPlaying) {
+                // Ensure count is saved if user closes/refreshes during playback
+                localStorage.setItem(localStorageKey, playCount.toString());
+            }
+        });
+
+        // Clean up old localStorage entries (older than 24 hours)
+        function cleanupOldPlayCounts() {
+            var keys = Object.keys(localStorage);
+            var cutoffTime = Date.now() - (24 * 60 * 60 * 1000); // 24 hours ago
+            
+            for (var i = 0; i < keys.length; i++) {
+                var key = keys[i];
+                if (key.startsWith('dictation_playcount_') && key !== localStorageKey) {
+                    var timestamp = localStorage.getItem(key + '_timestamp');
+                    if (!timestamp || parseInt(timestamp) < cutoffTime) {
+                        localStorage.removeItem(key);
+                        localStorage.removeItem(key + '_timestamp');
+                    }
+                }
+            }
+        }
+        
+        // Set timestamp for current session
+        localStorage.setItem(localStorageKey + '_timestamp', Date.now().toString());
+        cleanupOldPlayCounts();
+
 
         function canPlay() {
             return maxPlays === 0 || playCount < maxPlays;
@@ -135,6 +194,8 @@ define(['jquery'], function($) {
             if (playCountInput.length > 0) {
                 playCountInput.val(playCount);
             }
+            // Also save to localStorage for persistence across page refreshes
+            localStorage.setItem(localStorageKey, playCount.toString());
         }
     }
 
