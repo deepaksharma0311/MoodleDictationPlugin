@@ -15,6 +15,9 @@ define(['jquery'], function($) {
      */
     function init(questionid,maxplays,enableaudio, qaid) {
         maxPlays = maxplays || 0;
+        if(maxPlays==0){
+            return;
+        }
         enableAudio = enableaudio;    
         $( document ).ready(function() {
       

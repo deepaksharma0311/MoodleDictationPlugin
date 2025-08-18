@@ -117,7 +117,8 @@ class qtype_dictation_renderer extends qtype_renderer {
         $buttonattrs = array(
             'type' => 'button',
             'id' => 'dictation-play-btn-' . $question->id,
-            'class' => 'btn btn-primary audio-play-btn'
+            'class' => 'btn btn-primary audio-play-btn',
+            'aria-label' => get_string('play', 'qtype_dictation'),
         );
         
         if ($disabled) {
@@ -207,7 +208,7 @@ class qtype_dictation_renderer extends qtype_renderer {
                 'value' => $currentvalue,
                 'class' => $cssclass,
                 'size' => $inputsize,
-               // 'size' => max(8, strlen($correctword)),
+                'aria-label' => "Gap ".$gapindex,
                 'placeholder' => $placeholder,
                 'autocomplete' => 'off',
                 //'data-correct-length' => strlen($correctword)
