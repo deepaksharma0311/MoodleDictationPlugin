@@ -165,10 +165,11 @@ class qtype_dictation_renderer extends qtype_renderer {
     private function render_question_text_with_gaps($question, $qa, $currentanswer) {
         $text = $question->transcript;
         $gapindex = 0;
+        $gapindexnew = 1;
         $displaymode = isset($question->displaymode) ? $question->displaymode : 'standard';
         
         // Replace [word] with input boxes based on display mode
-        $text = preg_replace_callback('/\[([^\]]+)\]/', function($matches) use (&$gapindex, $qa, $currentanswer, $displaymode, $question) {
+        $text = preg_replace_callback('/\[([^\]]+)\]/', function($matches) use (&$gapindex, $qa, $currentanswer, $displaymode, $question,$gapindexnew) {
             $fieldname = $qa->get_qt_field_name('gap_' . $gapindex);
             $currentvalue = isset($currentanswer['gap_' . $gapindex]) ? $currentanswer['gap_' . $gapindex] : '';
             //$correctword = $matches[1];
@@ -208,7 +209,7 @@ class qtype_dictation_renderer extends qtype_renderer {
                 'value' => $currentvalue,
                 'class' => $cssclass,
                 'size' => $inputsize,
-                'aria-label' => "Gap ".$gapindex,
+                'aria-label' => "Gap ".$gapindexnew,
                 'placeholder' => $placeholder,
                 'autocomplete' => 'off',
                 //'data-correct-length' => strlen($correctword)
@@ -216,6 +217,8 @@ class qtype_dictation_renderer extends qtype_renderer {
                 'title' => count($correctAnswers) > 1 ? 'Multiple answers accepted: ' : ''
             ));
             $gapindex++;
+            $gapindexnew++;
+
             return $inputhtml;
         }, $text);
         

@@ -15,9 +15,7 @@ define(['jquery'], function($) {
      */
     function init(questionid,maxplays,enableaudio, qaid) {
         maxPlays = maxplays || 0;
-        if(maxPlays==0){
-            return;
-        }
+        
         enableAudio = enableaudio;    
         $( document ).ready(function() {
       
@@ -162,7 +160,13 @@ define(['jquery'], function($) {
 
 
         function canPlay() {
-            return maxPlays === 0 || playCount < maxPlays;
+            if(maxPlays==0){
+                return true;
+            }
+            if(playCount <= maxPlays){
+                return true;
+            }
+            return false;
         }
 
         function playAudio() {

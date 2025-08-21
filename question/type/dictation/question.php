@@ -236,11 +236,11 @@ class qtype_dictation_question extends question_graded_automatically {
      */
     public function summarise_response(array $response) {
         $parts = array();
-        
+
         for ($i = 0; $i < count($this->gaps); $i++) {
             $gapkey = 'gap_' . $i;
-            if (isset($response[$gapkey][0]) && $response[$gapkey][0] !== '') {
-                $parts[] = $response[$gapkey][0];
+            if (isset($response[$gapkey]) && $response[$gapkey] !== '') {
+                $parts[] = $response[$gapkey];
             }
         }
         
