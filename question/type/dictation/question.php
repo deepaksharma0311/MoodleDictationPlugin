@@ -173,6 +173,8 @@ class qtype_dictation_question extends question_graded_automatically {
         if (empty($correct) || empty($student)) {
             return 0.0;
         }
+       
+        $student =  $this->normalize_answer($student);
         
         // Normalize case for comparison
        // $correct = strtolower(trim($correct));
@@ -185,6 +187,7 @@ class qtype_dictation_question extends question_graded_automatically {
         $bestScore = 0.0;
         
         foreach ($correctAnswers as $correctWord) {
+            $correctWord = $this->normalize_answer($correctWord);
             $correctWord = strtolower(trim($correctWord));
             $score = $this->calculate_single_word_score($correctWord, $student);
             $bestScore = max($bestScore, $score);
@@ -197,6 +200,34 @@ class qtype_dictation_question extends question_graded_automatically {
         
         return $bestScore;
     }
+
+    public function normalize_answer(string $s): string {
+        // Normalize line endings
+        $s = str_replace(["\r\n", "\r"], "\n", $s);
+
+        // 1) Prefer NFKC via intl Normalizer (covers wide range, including full-width)
+        if (class_exists('\Normalizer')) {
+            $s = \Normalizer::normalize($s, \Normalizer::FORM_KC);
+        } else {
+            // 2) Fallback: convert to half-width alphanumerics & spaces
+            //  - 'a' => alphabets to half-width
+            //  - 'n' => numbers to half-width
+            //  - 's' => spaces to half-width (converts U+3000 ideographic space)
+            //  (Add 'r' if you need prolonged sound mark handling for kana; not needed for A/Z/0-9)
+            $s = mb_convert_kana($s, 'ans', 'UTF-8');
+        }
+
+        // Case-insensitive compare
+        $s = mb_strtolower($s, 'UTF-8');
+
+        // Normalize whitespace: trim ends and collapse runs of spaces/tabs/ideographic spaces
+        // (By now, U+3000 should already be half-width via 's', but this is extra-safe.)
+        $s = preg_replace('/[\\h\\x{3000}]+/u', ' ', $s);
+        $s = trim($s);
+
+        return $s;
+    }
+
     
     /**
      * Calculate score for a single word using the selected scoring method.
