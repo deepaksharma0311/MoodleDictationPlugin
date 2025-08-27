@@ -163,7 +163,7 @@ define(['jquery'], function($) {
             if(maxPlays==0){
                 return true;
             }
-            if(playCount <= maxPlays){
+            if(playCount < maxPlays){
                 return true;
             }
             return false;
