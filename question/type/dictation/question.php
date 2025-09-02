@@ -129,7 +129,9 @@ class qtype_dictation_question extends question_graded_automatically {
         $gapscores = array();
         for ($i = 0; $i < count($this->gaps); $i++) {
             $gapkey = 'gap_' . $i;
-            $correctword = $this->gaps[$i][0];
+            $correctword = $this->gaps[$i];
+            $correctwordwg = $this->gaps[$i][0];
+
             $studentword = isset($response[$gapkey]) ? $response[$gapkey] : '';
             
             // Calculate word weight based on length
@@ -139,7 +141,7 @@ class qtype_dictation_question extends question_graded_automatically {
                 $wordweight = 1.0;
             }
             else{
-                $wordweight = strlen($correctword);
+                $wordweight = strlen($correctwordwg);
             }
             
             $totalweight += $wordweight;
@@ -185,7 +187,7 @@ class qtype_dictation_question extends question_graded_automatically {
         // Handle multiple correct answers
         $correctAnswers = is_array($correct) ? $correct : array($correct);
         $bestScore = 0.0;
-        
+
         foreach ($correctAnswers as $correctWord) {
             $correctWord = $this->normalize_answer($correctWord);
             $correctWord = strtolower(trim($correctWord));
@@ -267,11 +269,17 @@ class qtype_dictation_question extends question_graded_automatically {
      */
     public function summarise_response(array $response) {
         $parts = array();
-
+       
         for ($i = 0; $i < count($this->gaps); $i++) {
             $gapkey = 'gap_' . $i;
             if (isset($response[$gapkey]) && $response[$gapkey] !== '') {
-                $parts[] = $response[$gapkey];
+                if (is_array($response[$gapkey])) {
+                    $parts[] = $response[$gapkey][0];
+                }
+                else{
+                    $parts[] = $response[$gapkey];
+                }
+              
             }
         }
         

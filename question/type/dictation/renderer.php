@@ -42,8 +42,7 @@ class qtype_dictation_renderer extends qtype_renderer {
         $qaid = $qa->get_database_id();
         $question = $qa->get_question();
         $currentanswer = $qa->get_last_qt_data();
-       // print_r($question);
-        // Display the question text
+      
         $questiontext = $question->format_questiontext($qa);
         $result = html_writer::tag('div', $questiontext, array('class' => 'qtext'));
 
@@ -54,15 +53,16 @@ class qtype_dictation_renderer extends qtype_renderer {
 
         // Add the question text with input gaps
         $result .= $this->render_question_text_with_gaps($question, $qa, $currentanswer);
-       
+    
         // Add JavaScript for audio control and form handling
+        if($options->readonly!=1){
         $PAGE->requires->js_call_amd('qtype_dictation/dictation', 'init', array(
             'questionid' => $question->id,
             'maxplays' => $question->maxplays,
             'enableaudio' => $question->enableaudio,
             'qaid' => $qaid
         ));
-
+        }
         if ($qa->get_state() == question_state::$invalid) {
             $result .= html_writer::nonempty_tag('div',
                 $question->get_validation_error($currentanswer),
@@ -131,10 +131,11 @@ class qtype_dictation_renderer extends qtype_renderer {
 
         // Play counter
         if ($maxplays > 0) {
-            $countertext = get_string('playcount', 'qtype_dictation', array(
-                'current' => $playcount,
-                'max' => $maxplays
-            ));
+            // $countertext = get_string('playcount', 'qtype_dictation', array(
+            //     'current' => $playcount,
+            //     'max' => $maxplays
+            // ));
+            $countertext =  $playcount .' / '.$maxplays;
             $html .= html_writer::tag('span', $countertext, array(
                 'class' => 'dictation-play-counter',
                 'id' => 'dictation-counter-' . $question->id
