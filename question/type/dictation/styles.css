@@ -3,12 +3,19 @@
 /* Basic gap input styling */
 .dictation-gap {
     text-align: center;
-    padding: 4px 8px;
+    padding: 4px 0px;
     border: 1px solid #ccc;
     border-radius: 4px;
     margin: 0 2px;
     font-size: inherit;
     font-family: inherit;
+
+}
+.dictation-gap::placeholder {
+
+letter-spacing:1px;
+text-align:left;
+ 
 }
 
 /* Left-aligned text for input boxes when option is enabled */
@@ -134,7 +141,7 @@
     .dictation-gap {
         margin: 2px 0;
         display: inline-block;
-        min-width: 60px;
+        min-width: 35px;
     }
     
     .dictation-question-text {
@@ -150,11 +157,11 @@
 .dictation-gap {
     border: 2px solid #007cba;
     border-radius: 3px;
-    padding: 5px 8px;
+    padding: 5px 0px;
     margin: 0 2px;
     font-size: 1em;
     background: #fff;
-    min-width: 60px;
+    min-width: 35px;
     text-align: center;
 }
 
@@ -328,7 +335,7 @@
     }
     
     .dictation-gap {
-        min-width: 50px;
+        min-width: 35px;
         font-size: 0.9em;
     }
     

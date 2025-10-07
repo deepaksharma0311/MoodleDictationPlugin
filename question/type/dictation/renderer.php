@@ -203,7 +203,34 @@ class qtype_dictation_renderer extends qtype_renderer {
             // Generate placeholder based on display mode
            // $placeholder = $this->generate_gap_placeholder($correctword, $displaymode);
             $gapindexnew = $gapindex+1;
-            $inputhtml = html_writer::empty_tag('input', array(
+            $width1 = strlen($placeholder) . 'ch';
+            if(strlen($placeholder)>10){
+
+                $width1 = strlen($placeholder)-3 . 'ch';
+
+            }
+            
+
+        $maxlength = strlen($primaryWord); // ✅ word length के हिसाब से max typing
+
+$inputhtml = html_writer::empty_tag('input', array(
+    'type' => 'text',
+    'name' => $fieldname,
+    'id' => $fieldname,
+    'value' => $currentvalue,
+    'class' => $cssclass,
+    'aria-label' => "Gap ".$gapindexnew,
+    'placeholder' => $placeholder,
+    'autocomplete' => 'off',
+    'size' => $inputsize-1,
+    'maxlength' => $inputsize,   // ✅ new line added
+    'data-correct-length' => strlen($primaryWord),
+    'title' => count($correctAnswers) > 1 ? 'Multiple answers accepted: ' : '',
+    'style' => 'width:'.$width1.'; text-align:center;'
+));
+
+
+            /*$inputhtml = html_writer::empty_tag('input', array(
                 'type' => 'text',
                 'name' => $fieldname,
                 'id' => $fieldname,
@@ -216,7 +243,7 @@ class qtype_dictation_renderer extends qtype_renderer {
                 //'data-correct-length' => strlen($correctword)
                 'data-correct-length' => strlen($primaryWord),
                 'title' => count($correctAnswers) > 1 ? 'Multiple answers accepted: ' : ''
-            ));
+            ));*/
             $gapindex++;
          
 
