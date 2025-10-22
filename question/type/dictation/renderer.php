@@ -169,6 +169,7 @@ class qtype_dictation_renderer extends qtype_renderer {
         
         $displaymode = isset($question->displaymode) ? $question->displaymode : 'standard';
         
+        
         // Replace [word] with input boxes based on display mode
         $text = preg_replace_callback('/\[([^\]]+)\]/', function($matches) use (&$gapindex, $qa, $currentanswer, $displaymode, $question) {
             $fieldname = $qa->get_qt_field_name('gap_' . $gapindex);
@@ -197,40 +198,89 @@ class qtype_dictation_renderer extends qtype_renderer {
             
             // Calculate width for length hints mode  
             $inputsize = max(8, strlen($primaryWord));
+            
             if ($displaymode === 'length') {
                 $inputsize = (strlen($primaryWord) * 1.5); // Add small buffer
             }
             // Generate placeholder based on display mode
            // $placeholder = $this->generate_gap_placeholder($correctword, $displaymode);
             $gapindexnew = $gapindex+1;
-            $width1 = strlen($placeholder) . 'ch';
-            if(strlen($placeholder)>10){
+            $fontsize = 15; // ~.9375rem = 15px
 
-                $width1 = strlen($placeholder)-3 . 'ch';
+          
+            if($inputsize >0 ){
+                $inputsize1 = (strlen($primaryWord) * 1.55); // Add small buffer
+                $cc = $inputsize1+0.5 ;
 
             }
+            if($inputsize >10 ){
+                $inputsize1 = (strlen($primaryWord) * 1.52); // Add small buffer
+                $cc = $inputsize1;
+
+            }
+            if($inputsize >20 ){
+
+                $inputsize1 = (strlen($primaryWord) * 1.43); // Add small buffer
+                $cc = $inputsize1;
+
+            }
+            if($inputsize >35 ){
+
+               $inputsize1 = (strlen($primaryWord) * 1.38); // Add small buffer
+                $cc = $inputsize1;
+
+            }
+            if($inputsize >40 ){
+
+                $inputsize1 = (strlen($primaryWord) * 1.38); // Add small buffer
+                $cc = $inputsize1;
+
+            }
+
+
+            if ($displaymode === 'standard') {
+               $inputsize = max(8, strlen($primaryWord));
+
+                    if($inputsize >0 ){
+                        $inputsize1 = (strlen($primaryWord) * 1.4); // Add small buffer
+                        $cc = $inputsize1+0.5 ;
+
+                    }
+                    if($inputsize >7 ){
+                        $inputsize1 = (strlen($primaryWord) * 1.05); // Add small buffer
+                        $cc = $inputsize1+0.5 ;
+
+                    }
+                    if($inputsize >10 ){
+                        $inputsize1 = (strlen($primaryWord) * 1.05); // Add small buffer
+                        $cc = $inputsize1;
+
+                    }
+                    if($inputsize >20 ){
+
+                        $inputsize1 = (strlen($primaryWord) * 1.05); // Add small buffer
+                        $cc = $inputsize1;
+
+                    }
+                    if($inputsize >35 ){
+
+                    $inputsize1 = (strlen($primaryWord) * 1.05); // Add small buffer
+                        $cc = $inputsize1;
+
+                    }
+                    if($inputsize >40 ){
+
+                        $inputsize1 = (strlen($primaryWord) * 0.99  ); // Add small buffer
+                        $cc = $inputsize1;
+
+                    }
+            }
+            $widthstyle = 'width: ' . $cc . 'ch;'; // +10px padding buffer
+
+
+             
             
-
-        $maxlength = strlen($primaryWord); // ✅ word length के हिसाब से max typing
-
-$inputhtml = html_writer::empty_tag('input', array(
-    'type' => 'text',
-    'name' => $fieldname,
-    'id' => $fieldname,
-    'value' => $currentvalue,
-    'class' => $cssclass,
-    'aria-label' => "Gap ".$gapindexnew,
-    'placeholder' => $placeholder,
-    'autocomplete' => 'off',
-    'size' => $inputsize-1,
-    'maxlength' => $inputsize,   // ✅ new line added
-    'data-correct-length' => strlen($primaryWord),
-    'title' => count($correctAnswers) > 1 ? 'Multiple answers accepted: ' : '',
-    'style' => 'width:'.$width1.'; text-align:center;'
-));
-
-
-            /*$inputhtml = html_writer::empty_tag('input', array(
+            $inputhtml = html_writer::empty_tag('input', array(
                 'type' => 'text',
                 'name' => $fieldname,
                 'id' => $fieldname,
@@ -240,10 +290,31 @@ $inputhtml = html_writer::empty_tag('input', array(
                 'aria-label' => "Gap ".$gapindexnew,
                 'placeholder' => $placeholder,
                 'autocomplete' => 'off',
+                'maxlength' => strlen($primaryWord), 
+                
                 //'data-correct-length' => strlen($correctword)
                 'data-correct-length' => strlen($primaryWord),
                 'title' => count($correctAnswers) > 1 ? 'Multiple answers accepted: ' : ''
-            ));*/
+            ));
+
+            if (!empty($question->leftaligntext)) {
+                $inputhtml = html_writer::empty_tag('input', array(
+                'type' => 'text',
+                'name' => $fieldname,
+                'id' => $fieldname,
+                'value' => $currentvalue,
+                'class' => $cssclass,
+                'size' => $inputsize,
+                'aria-label' => "Gap ".$gapindexnew,
+                'placeholder' => $placeholder,
+                'autocomplete' => 'off',
+                'style' => $widthstyle,
+                'maxlength' => strlen($primaryWord), 
+                //'data-correct-length' => strlen($correctword)
+                'data-correct-length' => strlen($primaryWord),
+                'title' => count($correctAnswers) > 1 ? 'Multiple answers accepted: ' : ''
+            ));
+            }
             $gapindex++;
          
 
@@ -252,6 +323,17 @@ $inputhtml = html_writer::empty_tag('input', array(
         
         return html_writer::tag('div', $text, array('class' => 'dictation-question-text'));
     }
+
+    private function calculate_text_width($text, $fontsize = 15, $fontfile = '') {
+    if (empty($fontfile) || !file_exists($fontfile)) {
+        // Fallback if font missing
+        return strlen($text) * ($fontsize * 0.6);
+    }
+
+    $box = imagettfbbox($fontsize, 0, $fontfile, $text);
+    $width = abs($box[2] - $box[0]);
+    return (int)$width;
+}
 
     /**
      * Generate placeholder text for gaps based on display mode.

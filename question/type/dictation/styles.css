@@ -3,19 +3,12 @@
 /* Basic gap input styling */
 .dictation-gap {
     text-align: center;
-    padding: 4px 0px;
+    padding: 4px 8px;
     border: 1px solid #ccc;
     border-radius: 4px;
     margin: 0 2px;
     font-size: inherit;
     font-family: inherit;
-
-}
-.dictation-gap::placeholder {
-
-letter-spacing:1px;
-text-align:left;
- 
 }
 
 /* Left-aligned text for input boxes when option is enabled */
@@ -51,7 +44,7 @@ text-align:left;
 }
 
 .dictation-gap-letters {
-    min-width: 60px;
+    min-width: 5px;
 }
 
 .dictation-gap-partial {
@@ -141,9 +134,11 @@ text-align:left;
     .dictation-gap {
         margin: 2px 0;
         display: inline-block;
-        min-width: 35px;
+        min-width: 8px;
     }
-    
+    .que input[size], .que textarea[cols] {
+      margin: 1px;
+    }
     .dictation-question-text {
         padding: 10px;
         font-size: 1em;
@@ -157,11 +152,11 @@ text-align:left;
 .dictation-gap {
     border: 2px solid #007cba;
     border-radius: 3px;
-    padding: 5px 0px;
+    padding: 5px 2px;
     margin: 0 2px;
     font-size: 1em;
     background: #fff;
-    min-width: 35px;
+    min-width: 5px;
     text-align: center;
 }
 
@@ -335,7 +330,7 @@ text-align:left;
     }
     
     .dictation-gap {
-        min-width: 35px;
+        min-width: 27px;
         font-size: 0.9em;
     }
     
@@ -355,9 +350,9 @@ text-align:left;
     outline-offset: 2px;
 }
 .ctype-question {
-    text-align: left !important;
-    padding-left: 0;
-    margin-left: 0;
+    /*text-align: left !important;*/
+    /*padding-left: 0;
+    margin-left: 0;*/
 }
 /* High contrast mode support */
 @media (prefers-contrast: high) {
