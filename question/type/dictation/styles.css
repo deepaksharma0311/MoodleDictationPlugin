@@ -11,6 +11,12 @@
     font-family: inherit;
 }
 
+.que input[size], .que textarea[cols] {
+  width: auto;
+  max-width: 100%;
+  min-width: 43px;
+}
+
 /* Left-aligned text for input boxes when option is enabled */
 .dictation-gap-left-aligned {
     text-align: left !important;

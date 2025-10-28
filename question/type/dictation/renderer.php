@@ -290,7 +290,7 @@ class qtype_dictation_renderer extends qtype_renderer {
                 'aria-label' => "Gap ".$gapindexnew,
                 'placeholder' => $placeholder,
                 'autocomplete' => 'off',
-                'maxlength' => strlen($primaryWord), 
+                /*'maxlength' => strlen($primaryWord), */
                 
                 //'data-correct-length' => strlen($correctword)
                 'data-correct-length' => strlen($primaryWord),
@@ -309,7 +309,7 @@ class qtype_dictation_renderer extends qtype_renderer {
                 'placeholder' => $placeholder,
                 'autocomplete' => 'off',
                 'style' => $widthstyle,
-                'maxlength' => strlen($primaryWord), 
+                /*'maxlength' => strlen($primaryWord), */
                 //'data-correct-length' => strlen($correctword)
                 'data-correct-length' => strlen($primaryWord),
                 'title' => count($correctAnswers) > 1 ? 'Multiple answers accepted: ' : ''
