@@ -326,6 +326,8 @@
 
 /* Responsive design */
 @media (max-width: 768px) {
+
+
     .dictation-audio-player {
         text-align: center;
     }
@@ -373,4 +375,10 @@
     .gap-feedback.incorrect {
         border-left-width: 6px;
     }
+}
+
+.dictation-gap-standard {
+
+  margin-left: -1px !important;
+  font-size: 1em;
 }
