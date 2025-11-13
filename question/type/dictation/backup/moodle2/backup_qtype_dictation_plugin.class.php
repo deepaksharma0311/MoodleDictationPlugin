@@ -65,7 +65,7 @@ class backup_qtype_dictation_plugin extends backup_qtype_plugin {
         $attempt->set_source_table('qtype_dictation_attempts', array('questionid' => backup::VAR_PARENTID));
 
         // Define file annotations.
-        $options->annotate_files('qtype_dictation', 'audio', 'questionid');
+        //$options->annotate_files('qtype_dictation', 'audio', 'questionid');
 
         // Return the root element (pluginwrapper).
         return $plugin;
